@@ -1,19 +1,28 @@
 import { describe, expect, it } from "vitest";
 
-import { parsePublicEnv } from "./env";
+import { parseServerEnv } from "./env";
 
-describe("parsePublicEnv", () => {
-  it("accepts an http(s) API base URL and strips trailing slashes", () => {
-    expect(parsePublicEnv({ NEXT_PUBLIC_API_BASE_URL: "https://api.example.com//" })).toEqual({
-      NEXT_PUBLIC_API_BASE_URL: "https://api.example.com",
+describe("parseServerEnv", () => {
+  it("accepts an http(s) API base URL, strips trailing slashes and defaults the timeout", () => {
+    expect(parseServerEnv({ API_BASE_URL: "https://api.example.com//" })).toEqual({
+      API_BASE_URL: "https://api.example.com",
+      API_TIMEOUT_MS: 30_000,
     });
   });
 
+  it("parses a custom timeout", () => {
+    expect(parseServerEnv({ API_BASE_URL: "http://localhost:8080", API_TIMEOUT_MS: "5000" }).API_TIMEOUT_MS).toBe(5000);
+  });
+
   it("fails fast when the API base URL is missing", () => {
-    expect(() => parsePublicEnv({})).toThrow(/NEXT_PUBLIC_API_BASE_URL/);
+    expect(() => parseServerEnv({})).toThrow(/API_BASE_URL/);
   });
 
   it.each(["not a url", "ftp://api.example.com", "javascript:alert(1)"])("rejects %s", (value) => {
-    expect(() => parsePublicEnv({ NEXT_PUBLIC_API_BASE_URL: value })).toThrow(/Invalid public environment/);
+    expect(() => parseServerEnv({ API_BASE_URL: value })).toThrow(/Invalid server environment/);
+  });
+
+  it("rejects an out-of-range timeout", () => {
+    expect(() => parseServerEnv({ API_BASE_URL: "http://localhost:8080", API_TIMEOUT_MS: "10" })).toThrow();
   });
 });

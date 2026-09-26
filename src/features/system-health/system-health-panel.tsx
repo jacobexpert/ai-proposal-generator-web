@@ -5,8 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge, type StatusBadgeProps } from "@/components/ui/status-badge";
-import { env } from "@/config/env";
-import { ApiError, NetworkError } from "@/lib/api/client";
+import { ApiError, BFF_API_PREFIX, NetworkError } from "@/lib/api/client";
 
 import { useHealth } from "./use-health";
 
@@ -44,7 +43,7 @@ export function SystemHealthPanel() {
           <h2 id="backend-health-title" className="text-panel-title font-semibold">
             Backend API
           </h2>
-          <p className="mt-0.5 font-mono text-mono-sm text-muted-foreground">{env.NEXT_PUBLIC_API_BASE_URL}</p>
+          <p className="mt-0.5 font-mono text-mono-sm text-muted-foreground">{BFF_API_PREFIX}/actuator/health</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
           <RefreshCw className={isFetching ? "animate-spin" : undefined} />

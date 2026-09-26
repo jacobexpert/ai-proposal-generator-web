@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
+const MOCK_API_PORT = Number(process.env.MOCK_API_PORT ?? 3199);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -18,11 +19,20 @@ export default defineConfig({
       : undefined,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } }],
-  webServer: {
-    command: `npm run dev -- --port ${PORT}`,
-    url: `http://localhost:${PORT}`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: { NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080" },
-  },
+  webServer: [
+    {
+      // Stand-in for the Spring Boot API: the BFF calls it server-side.
+      command: `node e2e/mock-backend.mjs`,
+      url: `http://localhost:${MOCK_API_PORT}/actuator/health`,
+      reuseExistingServer: !process.env.CI,
+      env: { MOCK_API_PORT: String(MOCK_API_PORT) },
+    },
+    {
+      command: `npm run dev -- --port ${PORT}`,
+      url: `http://localhost:${PORT}/login`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: { API_BASE_URL: `http://localhost:${MOCK_API_PORT}` },
+    },
+  ],
 });

@@ -1,5 +1,3 @@
-import { env } from "@/config/env";
-
 /** RFC 9457 Problem Details as returned by the backend (plus its `traceId` extension). */
 export interface ProblemDetail {
   type?: string;
@@ -8,8 +6,13 @@ export interface ProblemDetail {
   detail?: string;
   instance?: string;
   traceId?: string;
+  /** Field errors, only for request validation failures (400). */
+  errors?: { field?: string; message?: string }[];
   [extension: string]: unknown;
 }
+
+/** Same-origin BFF prefix (FDEC-03): the browser never calls the API host directly. */
+export const BFF_API_PREFIX = "/api/backend";
 
 export class ApiError extends Error {
   constructor(
@@ -22,6 +25,15 @@ export class ApiError extends Error {
 
   get traceId(): string | undefined {
     return typeof this.problem?.traceId === "string" ? this.problem.traceId : undefined;
+  }
+
+  /** `{ field: message }` from a 400 validation problem; empty when none. */
+  get fieldErrors(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const e of Array.isArray(this.problem?.errors) ? this.problem.errors : []) {
+      if (typeof e?.field === "string" && typeof e?.message === "string") out[e.field] ??= e.message;
+    }
+    return out;
   }
 }
 
@@ -39,13 +51,14 @@ export interface ApiRequestInit extends Omit<RequestInit, "body"> {
 }
 
 /**
- * Minimal typed fetch wrapper. Auth, `X-Workspace-Id` and the shared error mapping
- * are added in US-FE-02 / US-FE-03 / US-FE-04; everything goes through this function.
+ * Browser-side fetch wrapper for backend API calls. Requests go to the same-origin BFF
+ * (`/api/backend/*`), which attaches the session token from its HttpOnly cookie.
+ * `X-Workspace-Id` and the shared error mapping are added in US-FE-03 / US-FE-04.
  */
 export async function apiFetch<T>(
   path: string,
   { json, headers, ...init }: ApiRequestInit = {},
-  baseUrl: string = env.NEXT_PUBLIC_API_BASE_URL,
+  baseUrl: string = defaultBaseUrl(),
 ): Promise<T> {
   if (!path.startsWith("/") || path.startsWith("//")) {
     // Only same-API relative paths: never let a caller turn this into an arbitrary URL.
@@ -61,6 +74,7 @@ export async function apiFetch<T>(
     response = await fetch(`${baseUrl}${path}`, {
       ...init,
       headers: requestHeaders,
+      credentials: "same-origin",
       body: json !== undefined ? JSON.stringify(json) : undefined,
     });
   } catch (error) {
@@ -73,6 +87,11 @@ export async function apiFetch<T>(
     throw new ApiError(response.status, isObject(body) ? (body as ProblemDetail) : null);
   }
   return body as T;
+}
+
+function defaultBaseUrl(): string {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}${BFF_API_PREFIX}`;
 }
 
 async function readBody(response: Response): Promise<unknown> {

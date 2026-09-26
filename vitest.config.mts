@@ -10,10 +10,11 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    environmentOptions: { jsdom: { url: "http://localhost:3000" } },
     globals: false,
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
-    env: { NEXT_PUBLIC_API_BASE_URL: "http://api.test" },
+    env: { API_BASE_URL: "http://api.test" },
     css: false,
   },
 });

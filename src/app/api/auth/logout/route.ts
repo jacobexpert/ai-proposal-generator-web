@@ -1,0 +1,46 @@
+import { NextResponse, type NextRequest } from "next/server";
+
+import { backendFetch, forwardedFor, problem } from "@/server/backend";
+import { isSameOriginRequest } from "@/server/csrf";
+import { ACCESS_COOKIE, REFRESH_COOKIE, clearSessionCookies, refreshSession } from "@/server/session";
+
+/**
+ * POST /api/auth/logout — revokes the session in the API (best effort) and always clears
+ * the session cookies. If the access token already expired, it is refreshed first so the
+ * refresh-token session is revoked too.
+ */
+export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) return problem(403, "Forbidden", "Cross-site request rejected.");
+
+  const clientIp = forwardedFor(request);
+  let accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
+  let refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
+
+  if (!accessToken && refreshToken) {
+    const refreshed = await refreshSession(refreshToken, clientIp);
+    if (refreshed.ok) {
+      accessToken = refreshed.tokens.accessToken;
+      refreshToken = refreshed.tokens.refreshToken;
+    }
+  }
+
+  if (accessToken) {
+    try {
+      await backendFetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          ...(clientIp ? { "X-Forwarded-For": clientIp } : {}),
+        },
+        body: JSON.stringify(refreshToken ? { refreshToken } : {}),
+      });
+    } catch {
+      // Best effort: the cookies are cleared regardless, tokens expire on their own.
+    }
+  }
+
+  const res = new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+  clearSessionCookies(res.cookies);
+  return res;
+}

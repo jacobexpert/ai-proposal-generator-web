@@ -12,10 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useLogout } from "@/features/auth/use-logout";
 
 /**
  * Top bar with the workspace switcher and user menu.
- * Both are placeholders until sign-in (US-FE-02) and workspaces (US-FE-03) are wired.
+ * Sign-out works (US-FE-02); profile and workspace data arrive with US-FE-03.
  */
 export function AppTopbar() {
   return (
@@ -45,6 +46,7 @@ function WorkspaceSwitcher() {
 }
 
 function UserMenu() {
+  const signOut = useLogout();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -56,7 +58,7 @@ function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Not signed in</DropdownMenuLabel>
+          <DropdownMenuLabel>Account</DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
@@ -64,9 +66,9 @@ function UserMenu() {
             <UserRound />
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem disabled={signOut.isPending} onClick={() => signOut.mutate()}>
             <LogOut />
-            Sign out
+            {signOut.isPending ? "Signing out…" : "Sign out"}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

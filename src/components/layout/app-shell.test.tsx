@@ -1,12 +1,17 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { server } from "@/mocks/server";
+import { renderWithProviders as render } from "@/test/render";
 
 import { AppShell } from "./app-shell";
 import { resetSidebarPreference } from "./use-sidebar-collapsed";
 
 const pathname = vi.hoisted(() => ({ value: "/proposals" }));
-vi.mock("next/navigation", () => ({ usePathname: () => pathname.value }));
+const router = vi.hoisted(() => ({ replace: vi.fn(), refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname.value, useRouter: () => router }));
 
 describe("AppShell", () => {
   beforeEach(() => {
@@ -61,5 +66,25 @@ describe("AppShell", () => {
     expect(screen.queryByRole("link", { name: "System health" })).not.toBeInTheDocument();
     rerender(<AppShell showDevTools>content</AppShell>);
     expect(screen.getByRole("link", { name: "System health" })).toBeInTheDocument();
+  });
+
+  it("signs out: calls the BFF, clears cached data and returns to /login", async () => {
+    let called = false;
+    server.use(
+      http.post("http://localhost:3000/api/auth/logout", () => {
+        called = true;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const user = userEvent.setup();
+    const { client } = render(<AppShell>content</AppShell>);
+    client.setQueryData(["me"], { email: "jackie@example.com" });
+
+    await user.click(screen.getByRole("button", { name: "Open user menu" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Sign out" }));
+
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/login"));
+    expect(called).toBe(true);
+    expect(client.getQueryData(["me"])).toBeUndefined();
   });
 });

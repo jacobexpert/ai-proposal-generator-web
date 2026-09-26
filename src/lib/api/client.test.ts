@@ -1,20 +1,20 @@
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 
-import { API_BASE_URL } from "@/mocks/handlers";
+import { BFF_BASE_URL } from "@/mocks/handlers";
 import { server } from "@/mocks/server";
 
 import { ApiError, NetworkError, apiFetch } from "./client";
 
 describe("apiFetch", () => {
   it("returns the parsed JSON body", async () => {
-    server.use(http.get(`${API_BASE_URL}/api/ping`, () => HttpResponse.json({ ok: true })));
+    server.use(http.get(`${BFF_BASE_URL}/api/ping`, () => HttpResponse.json({ ok: true })));
     await expect(apiFetch("/api/ping")).resolves.toEqual({ ok: true });
   });
 
   it("sends a JSON body with the right content type", async () => {
     server.use(
-      http.post(`${API_BASE_URL}/api/echo`, async ({ request }) =>
+      http.post(`${BFF_BASE_URL}/api/echo`, async ({ request }) =>
         HttpResponse.json({ contentType: request.headers.get("content-type"), body: await request.json() }),
       ),
     );
@@ -26,7 +26,7 @@ describe("apiFetch", () => {
 
   it("maps an error response to ApiError with problem details and trace id", async () => {
     server.use(
-      http.get(`${API_BASE_URL}/api/missing`, () =>
+      http.get(`${BFF_BASE_URL}/api/missing`, () =>
         HttpResponse.json(
           { title: "Not Found", status: 404, traceId: "abc123" },
           { status: 404, headers: { "Content-Type": "application/problem+json" } },
@@ -39,12 +39,12 @@ describe("apiFetch", () => {
   });
 
   it("returns undefined for 204 No Content", async () => {
-    server.use(http.delete(`${API_BASE_URL}/api/thing`, () => new HttpResponse(null, { status: 204 })));
+    server.use(http.delete(`${BFF_BASE_URL}/api/thing`, () => new HttpResponse(null, { status: 204 })));
     await expect(apiFetch("/api/thing", { method: "DELETE" })).resolves.toBeUndefined();
   });
 
   it("wraps connection failures in NetworkError", async () => {
-    server.use(http.get(`${API_BASE_URL}/api/down`, () => HttpResponse.error()));
+    server.use(http.get(`${BFF_BASE_URL}/api/down`, () => HttpResponse.error()));
     await expect(apiFetch("/api/down")).rejects.toBeInstanceOf(NetworkError);
   });
 

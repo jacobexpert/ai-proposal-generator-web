@@ -2,13 +2,13 @@ import { screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 
-import { API_BASE_URL } from "@/mocks/handlers";
+import { BFF_BASE_URL } from "@/mocks/handlers";
 import { server } from "@/mocks/server";
 import { renderWithProviders } from "@/test/render";
 
 import { SystemHealthPanel } from "./system-health-panel";
 
-const healthUrl = `${API_BASE_URL}/actuator/health`;
+const healthUrl = `${BFF_BASE_URL}/actuator/health`;
 
 describe("SystemHealthPanel", () => {
   it("shows the overall and per-component status when the backend is up", async () => {

@@ -12,3 +12,8 @@ export function notifyError(error: unknown, fallbackTitle?: string): void {
 export function notifySuccess(title: string, description?: string): void {
   toast.success(title, { description });
 }
+
+/** Something changed that the user did not ask for (e.g. an automatic workspace switch). */
+export function notifyWarning(title: string, description?: string): void {
+  toast.warning(title, { description });
+}

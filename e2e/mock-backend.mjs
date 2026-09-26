@@ -5,6 +5,18 @@ import { createServer } from "node:http";
 const PORT = Number(process.env.MOCK_API_PORT ?? 3199);
 export const E2E_USER = { email: "jackie@example.com", password: "correct horse battery" };
 
+export const E2E_WORKSPACES = [
+  { id: "0f5e7b1c-3a2d-4c8e-9b6f-1a2b3c4d5e6f", name: "Acme Consulting", role: "OWNER" },
+  { id: "7c9d2e4f-5b6a-4d3c-8e1f-2a3b4c5d6e7f", name: "Globex Delivery", role: "MEMBER" },
+];
+const ME = {
+  id: "11111111-2222-4333-8444-555555555555",
+  email: E2E_USER.email,
+  displayName: "Jackie Tran",
+  status: "ACTIVE",
+  workspaces: E2E_WORKSPACES,
+};
+
 let generation = 0;
 const tokens = () => {
   generation += 1;
@@ -58,6 +70,14 @@ createServer(async (req, res) => {
   }
   if (req.method === "GET" && pathname === "/actuator/health") {
     return json(res, 200, { status: "UP", components: { db: { status: "UP" } } });
+  }
+  if (req.method === "GET" && pathname === "/api/me") {
+    return authed ? json(res, 200, ME) : problem(res, 401, "Unauthorized");
+  }
+  if (req.method === "GET" && pathname === "/api/workspaces/current") {
+    if (!authed) return problem(res, 401, "Unauthorized");
+    const ws = E2E_WORKSPACES.find((w) => w.id === req.headers["x-workspace-id"]);
+    return ws ? json(res, 200, { ...ws, createdAt: "2026-09-01T00:00:00Z" }) : problem(res, 404, "Not Found");
   }
   if (pathname.startsWith("/api/")) {
     return authed ? json(res, 200, {}) : problem(res, 401, "Unauthorized");

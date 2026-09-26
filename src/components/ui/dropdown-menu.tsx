@@ -91,6 +91,20 @@ function DropdownMenuItem({
   );
 }
 
+/** A menu entry that navigates: renders a real link (`render={<Link href="…" />}`), not role="menuitem" on a button. */
+function DropdownMenuLinkItem({ className, ...props }: MenuPrimitive.LinkItem.Props) {
+  return (
+    <MenuPrimitive.LinkItem
+      data-slot="dropdown-menu-link-item"
+      className={cn(
+        "relative flex min-h-8 cursor-default items-center gap-2 rounded-md px-2 text-body-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 function DropdownMenuSub({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
   return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />;
 }
@@ -235,6 +249,7 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
 }
 
 export {
+  DropdownMenuLinkItem,
   DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuTrigger,

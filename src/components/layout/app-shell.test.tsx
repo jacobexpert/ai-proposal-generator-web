@@ -10,7 +10,7 @@ import { AppShell } from "./app-shell";
 import { resetSidebarPreference } from "./use-sidebar-collapsed";
 
 const pathname = vi.hoisted(() => ({ value: "/proposals" }));
-const router = vi.hoisted(() => ({ replace: vi.fn(), refresh: vi.fn() }));
+const router = vi.hoisted(() => ({ replace: vi.fn(), refresh: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.value, useRouter: () => router }));
 
 describe("AppShell", () => {
@@ -37,9 +37,9 @@ describe("AppShell", () => {
     expect(screen.getByRole("link", { name: "Dashboard" })).not.toHaveAttribute("aria-current");
   });
 
-  it("renders the top bar controls and the content area", () => {
+  it("renders the top bar controls and the content area", async () => {
     render(<AppShell>page body</AppShell>);
-    expect(screen.getByRole("button", { name: "Switch workspace" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /switch workspace/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open user menu" })).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("page body");
     expect(screen.getByRole("link", { name: "Skip to content" })).toHaveAttribute("href", "#main-content");

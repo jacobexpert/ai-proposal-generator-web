@@ -34,6 +34,7 @@ describe("POST /api/auth/logout", () => {
     expect(cookies.apg_at.value).toBe("");
     expect(cookies.apg_at.attrs).toContain("max-age=0");
     expect(cookies.apg_rt.attrs).toContain("max-age=0");
+    expect(cookies.apg_ws.attrs).toContain("max-age=0"); // remembered workspace forgotten
   });
 
   it("refreshes an expired access token first so the refresh session is revoked too", async () => {

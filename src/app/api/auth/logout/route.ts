@@ -2,11 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { backendFetch, forwardedFor, problem } from "@/server/backend";
 import { isSameOriginRequest } from "@/server/csrf";
+import { WORKSPACE_COOKIE } from "@/features/workspaces/workspace-cookie";
 import { ACCESS_COOKIE, REFRESH_COOKIE, clearSessionCookies, refreshSession } from "@/server/session";
 
 /**
  * POST /api/auth/logout — revokes the session in the API (best effort) and always clears
- * the session cookies. If the access token already expired, it is refreshed first so the
+ * the session cookies (and the remembered workspace). If the access token already expired, it is refreshed first so the
  * refresh-token session is revoked too.
  */
 export async function POST(request: NextRequest) {
@@ -42,5 +43,7 @@ export async function POST(request: NextRequest) {
 
   const res = new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } });
   clearSessionCookies(res.cookies);
+  // The next person to sign in on this browser starts from their own first workspace.
+  res.cookies.set({ name: WORKSPACE_COOKIE, value: "", path: "/", maxAge: 0 });
   return res;
 }

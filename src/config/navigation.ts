@@ -27,6 +27,7 @@ export function isNavItemActive(pathname: string, href: string): boolean {
 const ROUTE_LABELS: Record<string, string> = {
   "/proposals": "Proposals",
   "/proposals/new": "New proposal",
+  "/profile": "Profile",
   "/settings": "Settings",
   "/settings/workspace": "Workspace",
   "/settings/members": "Members",

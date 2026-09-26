@@ -1,6 +1,7 @@
 "use client";
 
-import { Building2, ChevronsUpDown, LogOut, UserRound } from "lucide-react";
+import { LogOut, UserRound } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -9,15 +10,14 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuLinkItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLogout } from "@/features/auth/use-logout";
+import { ROLE_LABEL, useWorkspaceContext, WorkspaceSwitcher } from "@/features/workspaces";
 
-/**
- * Top bar with the workspace switcher and user menu.
- * Sign-out works (US-FE-02); profile and workspace data arrive with US-FE-03.
- */
+/** Top bar: workspace switcher and user menu (US-FE-03). */
 export function AppTopbar() {
   return (
     <header className="sticky top-0 z-30 flex h-topbar shrink-0 items-center justify-between gap-4 border-b border-border bg-background/90 px-6 backdrop-blur">
@@ -27,45 +27,51 @@ export function AppTopbar() {
   );
 }
 
-function WorkspaceSwitcher() {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" size="sm" aria-label="Switch workspace" />}>
-        <Building2 className="text-muted-foreground" />
-        <span className="max-w-56 truncate">Workspace</span>
-        <ChevronsUpDown className="text-muted-foreground" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
-          <DropdownMenuItem disabled>Sign in to load your workspaces</DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+/** Up to two initials from the display name, for the avatar. */
+export function initials(name: string | undefined): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  const letters = parts.length > 1 ? [parts[0], parts[parts.length - 1]] : parts;
+  return letters.map((p) => p[0]!.toUpperCase()).join("");
 }
 
 function UserMenu() {
   const signOut = useLogout();
+  const { user, workspace } = useWorkspaceContext();
+  const avatar = initials(user?.displayName);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={<Button variant="ghost" size="icon" aria-label="Open user menu" className="rounded-full" />}
       >
-        <span className="flex size-8 items-center justify-center rounded-full bg-muted text-foreground">
-          <UserRound className="size-4" />
+        <span className="flex size-8 items-center justify-center rounded-full bg-muted text-caption font-semibold text-foreground">
+          {avatar || <UserRound className="size-4" />}
         </span>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Account</DropdownMenuLabel>
+          <DropdownMenuLabel className="flex flex-col gap-0.5 py-2">
+            {user ? (
+              <>
+                <span className="truncate text-body-sm font-medium text-foreground">{user.displayName}</span>
+                <span className="truncate text-caption text-muted-foreground">{user.email}</span>
+              </>
+            ) : (
+              "Account"
+            )}
+          </DropdownMenuLabel>
+          {workspace && (
+            <p className="px-2 pb-2 text-caption text-muted-foreground">
+              <span className="text-foreground">{workspace.name}</span> · {ROLE_LABEL[workspace.role]}
+            </p>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem disabled>
+          <DropdownMenuLinkItem closeOnClick render={<Link href="/profile" />}>
             <UserRound />
             Profile
-          </DropdownMenuItem>
+          </DropdownMenuLinkItem>
           <DropdownMenuItem disabled={signOut.isPending} onClick={() => signOut.mutate()}>
             <LogOut />
             {signOut.isPending ? "Signing out…" : "Sign out"}

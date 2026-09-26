@@ -89,6 +89,22 @@ Toasts: mutations toast automatically except 400/401 or `meta: { errorToast: fal
 
 Shared states in `src/components/feedback`: `LoadingState`, `EmptyState`, `ErrorState`, `ConfirmDialog` (stays open with a spinner while `onConfirm` runs, shows failures inline), `notifyError`/`notifySuccess`. Error pages: `src/app/not-found.tsx`, `src/app/(app)/error.tsx` (inside the shell), `src/app/global-error.tsx`.
 
+## Workspaces (US-FE-03)
+
+Data endpoints are scoped by the `X-Workspace-Id` header (spec US-BE-03 D3). The current workspace belongs to the **browser tab** (`WorkspaceProvider`, `src/features/workspaces`); the `apg_ws` cookie only remembers the last choice for the next page load (it is re-checked against `GET /api/me` and cleared on sign-out). Reading the cookie per request would let a switch in one tab send another tab's writes to a different workspace.
+
+```ts
+import { useCurrentWorkspace, workspaceHeader, workspaceKey } from "@/features/workspaces";
+
+const ws = useCurrentWorkspace(); // only below <WorkspaceGate> (the app shell wraps every page)
+useQuery({
+  queryKey: workspaceKey(ws.id, "proposals", filters), // ["ws", id, …]
+  queryFn: () => unwrap(api().GET("/api/proposals", { params: { header: workspaceHeader(ws.id) } })),
+});
+```
+
+Workspace-scoped queries and mutations **must** use `workspaceKey(...)`: switching drops everything under `["ws"]`, and a 403/404 on such a key re-checks the memberships. If the user lost access, the app moves to the next workspace with a notice; with none left it shows "You're not a member of any workspace yet".
+
 ## Project structure
 
 ```text

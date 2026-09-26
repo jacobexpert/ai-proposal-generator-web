@@ -1,0 +1,4049 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Proposal Generator API",
+    "description": "REST API of ai-proposal-generator-api. Obtain a token with POST /api/auth/login, then use 'Authorize'. Workspace-scoped endpoints also need the X-Workspace-Id header.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/api/templates/{templateId}": {
+      "get": {
+        "tags": [
+          "template-controller"
+        ],
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "template-controller"
+        ],
+        "operationId": "replace",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "template-controller"
+        ],
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/workspaces/{workspaceId}/invitations": {
+      "get": {
+        "tags": [
+          "invitation-controller"
+        ],
+        "operationId": "pending",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvitationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "invitation-controller"
+        ],
+        "operationId": "invite",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedInvitationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/templates": {
+      "get": {
+        "tags": [
+          "template-controller"
+        ],
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateSummaryResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "template-controller"
+        ],
+        "operationId": "create",
+        "parameters": [
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/proposals": {
+      "get": {
+        "tags": [
+          "proposal-controller"
+        ],
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "DOCUMENTS_UPLOADED",
+                "ANALYZING",
+                "REQUIREMENTS_REVIEW",
+                "OUTLINE_READY",
+                "GENERATING",
+                "REVIEW",
+                "APPROVAL_PENDING",
+                "APPROVED",
+                "EXPORTED",
+                "FAILED"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "updatedAt"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "desc"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseProposalSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "proposal-controller"
+        ],
+        "operationId": "create_1",
+        "parameters": [
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/proposals/{proposalId}/retry": {
+      "post": {
+        "tags": [
+          "proposal-controller"
+        ],
+        "operationId": "retry",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/proposals/{proposalId}/documents": {
+      "get": {
+        "tags": [
+          "document-controller"
+        ],
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "document-controller"
+        ],
+        "operationId": "upload",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File larger than app.documents.max-file-size (25 MB)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content is not PDF, DOCX, TXT or MD (detected from the bytes)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Malware detected; the document is recorded as REJECTED (documentId)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Malware scanner or document storage unavailable; nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/invitations/lookup": {
+      "post": {
+        "tags": [
+          "invitation-controller"
+        ],
+        "operationId": "lookup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationPreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invitations/accept": {
+      "post": {
+        "tags": [
+          "invitation-controller"
+        ],
+        "operationId": "accept",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "registration-controller"
+        ],
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts; retry after the Retry-After header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "logout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many attempts; retry after the Retry-After header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}": {
+      "get": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "operationId": "get_1",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "operationId": "rename",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameWorkspaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/workspaces/{workspaceId}/members/{userId}": {
+      "delete": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "operationId": "removeMember",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "operationId": "changeRole",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/proposals/{proposalId}": {
+      "get": {
+        "tags": [
+          "proposal-controller"
+        ],
+        "operationId": "get_2",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "proposal-controller"
+        ],
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "proposal-controller"
+        ],
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/workspaces": {
+      "get": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "operationId": "list_3",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceSummary"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/workspaces/{workspaceId}/members": {
+      "get": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "operationId": "members",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberView"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/workspaces/current": {
+      "get": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "operationId": "current",
+        "parameters": [
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": [
+          "me-controller"
+        ],
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/documents/{documentId}": {
+      "get": {
+        "tags": [
+          "document-controller"
+        ],
+        "operationId": "get_3",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "document-controller"
+        ],
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "description": "Workspace to operate on; the caller must be a member (otherwise 404)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Document storage unavailable; the document was kept",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/.well-known/jwks.json": {
+      "get": {
+        "tags": [
+          "jwks-endpoint"
+        ],
+        "operationId": "jwks",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/invitations/{invitationId}": {
+      "delete": {
+        "tags": [
+          "invitation-controller"
+        ],
+        "operationId": "revoke",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Invalid request: validation errors (errors[]), malformed body, missing or invalid parameter/header",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or expired credentials/token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not allowed (e.g. OWNER role required)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible in the caller's workspace (existence is not disclosed)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with the current state (e.g. invalid status transition, duplicate, concurrent modification)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; report the traceId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblemDetail"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SectionRequest": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "requiresUserInput": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "title"
+        ]
+      },
+      "TemplateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SectionRequest"
+            },
+            "maxItems": 50,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "name",
+          "sections"
+        ]
+      },
+      "SectionResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requiresUserInput": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TemplateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SectionResponse"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InviteRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ]
+      },
+      "CreatedInvitationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "REVOKED"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "invitationToken": {
+            "type": "string"
+          },
+          "invitationUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateProposalRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "customerIndustry": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "opportunityDescription": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 0
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "language": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "[a-z]{2,3}(-[A-Za-z0-9]{2,8})?"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "[A-Za-z]{3}"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerWebsite": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "pattern": "(https?://\\S{1,490})?"
+          },
+          "accountManager": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "solutionArchitect": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "salesOwner": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "opportunityValue": {
+            "type": "number",
+            "minimum": 0
+          },
+          "internalNotes": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "currency",
+          "customerIndustry",
+          "customerName",
+          "deadline",
+          "language",
+          "name",
+          "opportunityDescription",
+          "templateId"
+        ]
+      },
+      "ProposalResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "customerIndustry": {
+            "type": "string"
+          },
+          "opportunityDescription": {
+            "type": "string"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "language": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerWebsite": {
+            "type": "string"
+          },
+          "accountManager": {
+            "type": "string"
+          },
+          "solutionArchitect": {
+            "type": "string"
+          },
+          "salesOwner": {
+            "type": "string"
+          },
+          "opportunityValue": {
+            "type": "number"
+          },
+          "internalNotes": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "DOCUMENTS_UPLOADED",
+              "ANALYZING",
+              "REQUIREMENTS_REVIEW",
+              "OUTLINE_READY",
+              "GENERATING",
+              "REVIEW",
+              "APPROVAL_PENDING",
+              "APPROVED",
+              "EXPORTED",
+              "FAILED"
+            ]
+          },
+          "previousStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "DOCUMENTS_UPLOADED",
+              "ANALYZING",
+              "REQUIREMENTS_REVIEW",
+              "OUTLINE_READY",
+              "GENERATING",
+              "REVIEW",
+              "APPROVAL_PENDING",
+              "APPROVED",
+              "EXPORTED",
+              "FAILED"
+            ]
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DocumentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "proposalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER_REQUIREMENT",
+              "RFP",
+              "RFI",
+              "MEETING_NOTE",
+              "COMPANY_PROFILE",
+              "REFERENCE_PROPOSAL",
+              "SERVICE_CATALOG",
+              "ARCHITECTURE_REFERENCE",
+              "PRICING_REFERENCE",
+              "OTHER"
+            ]
+          },
+          "checksumSha256": {
+            "type": "string"
+          },
+          "processingStatus": {
+            "type": "string",
+            "enum": [
+              "UPLOADED",
+              "EXTRACTING",
+              "CHUNKING",
+              "EMBEDDING",
+              "READY",
+              "FAILED",
+              "REJECTED"
+            ]
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "uploadedBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InvitationTokenRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "InvitationPreview": {
+        "type": "object",
+        "properties": {
+          "workspaceName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WorkspaceSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 12
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "workspaceName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "invitationToken": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "displayName",
+          "email",
+          "password"
+        ]
+      },
+      "RegistrationResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "refreshExpiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "RefreshTokenRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "refreshExpiresIn": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "LogoutRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 0
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RenameWorkspaceRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ChangeRoleRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ]
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "UpdateProposalRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0,
+            "pattern": "(?s).*\\S.*"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0,
+            "pattern": "(?s).*\\S.*"
+          },
+          "customerIndustry": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0,
+            "pattern": "(?s).*\\S.*"
+          },
+          "opportunityDescription": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 0,
+            "pattern": "(?s).*\\S.*"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "language": {
+            "type": "string",
+            "pattern": "[a-z]{2,3}(-[A-Za-z0-9]{2,8})?"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "[A-Za-z]{3}"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerWebsite": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0,
+            "pattern": "(https?://\\S{1,490})?"
+          },
+          "accountManager": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "solutionArchitect": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "salesOwner": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "opportunityValue": {
+            "type": "number",
+            "minimum": 0
+          },
+          "internalNotes": {
+            "type": "string",
+            "maxLength": 10000,
+            "minLength": 0
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MemberView": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ]
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InvitationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "REVOKED"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TemplateSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sectionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PageResponseProposalSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalSummaryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProposalSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "DOCUMENTS_UPLOADED",
+              "ANALYZING",
+              "REQUIREMENTS_REVIEW",
+              "OUTLINE_READY",
+              "GENERATING",
+              "REVIEW",
+              "APPROVAL_PENDING",
+              "APPROVED",
+              "EXPORTED",
+              "FAILED"
+            ]
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceItem"
+            }
+          }
+        }
+      },
+      "WorkspaceItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "OWNER",
+              "MEMBER"
+            ]
+          }
+        }
+      },
+      "ApiProblemDetail": {
+        "type": "object",
+        "description": "RFC 9457 Problem Details. Extra properties may be present (e.g. currentStatus, allowedTransitions, documentId).",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "about:blank"
+          },
+          "title": {
+            "type": "string",
+            "example": "Not Found"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "example": 404
+          },
+          "detail": {
+            "type": "string",
+            "example": "Proposal not found"
+          },
+          "instance": {
+            "type": "string",
+            "example": "/api/proposals/3f6c..."
+          },
+          "traceId": {
+            "type": "string",
+            "description": "Correlates with logs and X-Request-Id"
+          },
+          "errors": {
+            "type": "array",
+            "description": "Field errors, only for request validation failures (400)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "Access token from POST /api/auth/login or /api/auth/refresh",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

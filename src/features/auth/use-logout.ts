@@ -11,6 +11,7 @@ export function useLogout() {
   const router = useRouter();
   return useMutation({
     mutationFn: logout,
+    meta: { errorToast: false },
     // The BFF clears the cookies even when the API is unreachable, so always leave.
     onSettled: () => {
       queryClient.clear();

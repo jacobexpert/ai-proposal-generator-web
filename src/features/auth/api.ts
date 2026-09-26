@@ -1,4 +1,4 @@
-import { ApiError, NetworkError, type ProblemDetail } from "@/lib/api/client";
+import { ApiError, NetworkError, parseRetryAfter, type ProblemDetail } from "@/lib/api/client";
 
 import type { LoginInput } from "./schemas";
 
@@ -17,11 +17,7 @@ async function postAuth(path: "/api/auth/login" | "/api/auth/logout", body?: unk
   }
   if (!response.ok) {
     const problem = (await response.json().catch(() => null)) as ProblemDetail | null;
-    const retryAfter = Number(response.headers.get("retry-after"));
-    throw new ApiError(response.status, {
-      ...(problem ?? {}),
-      ...(Number.isFinite(retryAfter) && retryAfter > 0 ? { retryAfterSeconds: retryAfter } : {}),
-    });
+    throw new ApiError(response.status, problem, parseRetryAfter(response.headers.get("retry-after")));
   }
 }
 

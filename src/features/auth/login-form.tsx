@@ -11,29 +11,19 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ApiError, NetworkError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
+import { applyFieldErrors, describeApiError } from "@/lib/api/errors";
 
 import { login } from "./api";
 import { loginSchema, type LoginInput } from "./schemas";
 
 function describeLoginError(error: unknown): { message: string; traceId?: string } {
-  if (error instanceof ApiError) {
-    if (error.status === 401) return { message: "Incorrect email or password." };
-    if (error.status === 429) {
-      const seconds = Number(error.problem?.retryAfterSeconds);
-      const minutes = Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds / 60) : undefined;
-      return {
-        message: minutes
-          ? `Too many sign-in attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`
-          : "Too many sign-in attempts. Try again later.",
-      };
-    }
-    if (error.status === 400) return { message: "Check the highlighted fields." };
-    return { message: "Something went wrong on our side. Try again.", traceId: error.traceId };
-  }
-  if (error instanceof NetworkError)
-    return { message: "We couldn't reach the server. Check your connection and try again." };
-  return { message: "Something went wrong. Try again." };
+  // Generic on purpose (US-FE-02 AC2): never reveal whether the email exists.
+  if (error instanceof ApiError && error.status === 401) return { message: "Incorrect email or password." };
+  const ui = describeApiError(error);
+  if (ui.kind === "rate-limited") return { message: `Too many sign-in attempts. ${ui.message}` };
+  if (ui.kind === "network") return { message: "We couldn't reach the server. Check your connection and try again." };
+  return { message: `${ui.title}. ${ui.message}`, traceId: ui.traceId };
 }
 
 export function LoginForm({ returnUrl }: { returnUrl: string }) {
@@ -52,11 +42,7 @@ export function LoginForm({ returnUrl }: { returnUrl: string }) {
     try {
       await login(values);
     } catch (error) {
-      if (error instanceof ApiError && error.status === 400) {
-        for (const [field, message] of Object.entries(error.fieldErrors)) {
-          if (field === "email" || field === "password") setError(field, { message });
-        }
-      }
+      applyFieldErrors(error, ["email", "password"] as const, setError);
       setFormError(describeLoginError(error));
       return;
     }

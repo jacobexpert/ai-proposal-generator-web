@@ -4,7 +4,7 @@ Next.js frontend for the AI Proposal Generator. It talks to the Spring Boot API 
 
 ## Stack
 
-Next.js 16 (App Router, Turbopack) · React 19 · TypeScript (strict) · Tailwind CSS 4 · shadcn/ui (Radix) · TanStack Query · Zod · Vitest + React Testing Library + MSW · Playwright
+Next.js 16 (App Router, Turbopack) · React 19 · TypeScript (strict) · Tailwind CSS 4 · shadcn/ui (Base UI) · TanStack Query · Zod · Vitest + React Testing Library + MSW · Playwright
 
 UI follows the **Minimalist Modern** design system and its **App UI** section. Tokens live in `src/app/globals.css`, mirrored from the design system's `tokens.json`. Fonts are self-hosted from npm (`@fontsource`), so builds need no Google Fonts access.
 
@@ -22,16 +22,17 @@ The browser never calls the API directly. Next.js acts as a **BFF** (FDEC-03): `
 
 ## Scripts
 
-| Script                            | What it does                                                                                              |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `npm run dev`                     | Dev server                                                                                                |
-| `npm run build` / `npm start`     | Production build / serve                                                                                  |
-| `npm run lint`                    | ESLint (Next.js core-web-vitals + TypeScript)                                                             |
-| `npm run typecheck`               | `tsc --noEmit`                                                                                            |
-| `npm run format` / `format:check` | Prettier (with Tailwind class sorting)                                                                    |
-| `npm test` / `test:watch`         | Vitest unit and component tests                                                                           |
-| `npm run e2e`                     | Playwright end-to-end tests (starts a mock API on 3199 and the dev server on 3100)                        |
-| `npm run api:types`               | Regenerate `src/lib/api/schema.d.ts` from the running API's OpenAPI (`http://localhost:8080/v3/api-docs`) |
+| Script                            | What it does                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| `npm run dev`                     | Dev server                                                                           |
+| `npm run build` / `npm start`     | Production build / serve                                                             |
+| `npm run lint`                    | ESLint (Next.js core-web-vitals + TypeScript)                                        |
+| `npm run typecheck`               | `tsc --noEmit`                                                                       |
+| `npm run format` / `format:check` | Prettier (with Tailwind class sorting)                                               |
+| `npm test` / `test:watch`         | Vitest unit and component tests                                                      |
+| `npm run e2e`                     | Playwright end-to-end tests (starts a mock API on 3199 and the dev server on 3100)   |
+| `npm run api:spec`                | Download the API's OpenAPI (`$API_BASE_URL/v3/api-docs`) into `openapi/openapi.json` |
+| `npm run api:types`               | Regenerate `src/lib/api/schema.d.ts` from `openapi/openapi.json`                     |
 
 A Husky pre-commit hook runs `lint-staged` (ESLint + Prettier on staged files). CI (`.github/workflows/ci.yml`) runs lint, typecheck, format check, unit tests, build and E2E.
 
@@ -59,6 +60,35 @@ Validated with Zod at startup and build (`src/config/env.ts`); an invalid value 
 
 Tokens never reach JavaScript, `localStorage` or `sessionStorage`. The BFF forwards the client IP in `X-Forwarded-For`; the API must trust that header **only** from the BFF.
 
+## API client and errors (US-FE-04)
+
+The OpenAPI spec is committed (`openapi/openapi.json`) so builds and CI never need a running API. When the backend changes: `npm run api:spec && npm run api:types`, then commit both files.
+
+```ts
+import { api, unwrap, type Schema } from "@/lib/api/typed-client";
+
+const members = await unwrap(
+  api().GET("/api/workspaces/{workspaceId}/members", {
+    params: { path: { workspaceId } }, // endpoints that need `X-Workspace-Id` declare it under `header`
+  }),
+);
+```
+
+`unwrap` returns the data or throws `ApiError` (Problem Details, `traceId`, field errors) / `NetworkError`. `describeApiError()` (`src/lib/api/errors.ts`) turns any error into UI text:
+
+| Status   | UI                                                                                       |
+| -------- | ---------------------------------------------------------------------------------------- |
+| 400      | Field errors on the form (`applyFieldErrors`), no toast                                  |
+| 401      | Session over → full navigation to `/login?returnUrl=…` (`src/app/providers.tsx`)         |
+| 403, 404 | "Not found or you don't have access" — same text, never reveals whether something exists |
+| 409      | The server's status message (e.g. "The document is being processed")                     |
+| 429      | "Try again in N minutes" from `Retry-After`                                              |
+| 5xx      | Generic message + toast with the trace ID                                                |
+
+Toasts: mutations toast automatically except 400/401 or `meta: { errorToast: false }` (when the screen shows the error itself). Queries render `<ErrorState/>` on first load and toast only when a background refresh fails.
+
+Shared states in `src/components/feedback`: `LoadingState`, `EmptyState`, `ErrorState`, `ConfirmDialog` (stays open with a spinner while `onConfirm` runs, shows failures inline), `notifyError`/`notifySuccess`. Error pages: `src/app/not-found.tsx`, `src/app/(app)/error.tsx` (inside the shell), `src/app/global-error.tsx`.
+
 ## Project structure
 
 ```text
@@ -67,6 +97,7 @@ src/
   components/
     ui/                Design-system primitives (shadcn/ui based): Button, StatusBadge, …
     layout/            App shell: sidebar, top bar, page header
+    feedback/          Loading / empty / error states, confirm dialog, toasts
   config/              Env schema, navigation
   features/<feature>/  Feature modules: API calls, hooks, components, tests (see src/features/README.md)
   lib/                 Cross-cutting helpers: API client, cn(), safe returnUrl
@@ -75,11 +106,12 @@ src/
   mocks/               MSW handlers for tests
   test/                Test setup and render helpers
 e2e/                   Playwright specs
+openapi/               Committed OpenAPI snapshot (source of generated types)
 ```
 
 ## Conventions
 
-- Types for API payloads come from the backend OpenAPI (added with US-FE-04); do not hand-write duplicates.
+- Types for API payloads come from the generated `schema.d.ts` (`Schema<"Name">`); do not hand-write duplicates.
 - Validate API responses with Zod before use; never trust server or AI output blindly.
 - Render document and AI content as text; never inject HTML that has not been sanitised.
 - No tokens in `localStorage`/`sessionStorage`. Browser storage is only for UI preferences.

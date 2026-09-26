@@ -18,6 +18,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly problem: ProblemDetail | null,
+    /** From the `Retry-After` header (seconds), e.g. on 429 / 503. */
+    readonly retryAfterSeconds?: number,
   ) {
     super(problem?.title ?? `Request failed with status ${status}`);
     this.name = "ApiError";
@@ -53,7 +55,8 @@ export interface ApiRequestInit extends Omit<RequestInit, "body"> {
 /**
  * Browser-side fetch wrapper for backend API calls. Requests go to the same-origin BFF
  * (`/api/backend/*`), which attaches the session token from its HttpOnly cookie.
- * `X-Workspace-Id` and the shared error mapping are added in US-FE-03 / US-FE-04.
+ * Prefer the typed client (`api` in ./typed-client) for endpoints in the OpenAPI spec;
+ * this untyped helper is for the few that are not (e.g. `/actuator/health`).
  */
 export async function apiFetch<T>(
   path: string,
@@ -84,12 +87,27 @@ export async function apiFetch<T>(
 
   const body = await readBody(response);
   if (!response.ok) {
-    throw new ApiError(response.status, isObject(body) ? (body as ProblemDetail) : null);
+    throw new ApiError(
+      response.status,
+      isObject(body) ? (body as ProblemDetail) : null,
+      parseRetryAfter(response.headers.get("retry-after")),
+    );
   }
   return body as T;
 }
 
-function defaultBaseUrl(): string {
+/** `Retry-After` in seconds (delta-seconds or HTTP date); undefined when absent/invalid. */
+export function parseRetryAfter(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return seconds > 0 ? Math.ceil(seconds) : undefined;
+  const date = Date.parse(value);
+  if (Number.isNaN(date)) return undefined;
+  const delta = Math.ceil((date - Date.now()) / 1000);
+  return delta > 0 ? delta : undefined;
+}
+
+export function defaultBaseUrl(): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   return `${origin}${BFF_API_PREFIX}`;
 }
@@ -109,6 +127,6 @@ async function readBody(response: Response): Promise<unknown> {
   return undefined;
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
+export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

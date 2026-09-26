@@ -1,0 +1,191 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * Design system: "Minimalist Modern" (+ App UI section).
+ * Token values mirror project/tokens.json of the design system artifact.
+ * Only the Light theme ships in the MVP (App UI: "One theme: Light").
+ */
+:root {
+  /* Brand */
+  --background: #fafafa;
+  --foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #0052ff;
+  --accent-secondary: #4d7cff;
+  --accent-text: var(--accent);
+  --accent-foreground: #ffffff;
+  --accent-subtle: #0052ff0d;
+  --accent-line: #0052ff4d;
+  --border: #e2e8f0;
+  --card: #ffffff;
+  --ring: var(--accent);
+
+  /* App UI: status */
+  --success: #047857;
+  --success-subtle: #ecfdf5;
+  --warning: #b45309;
+  --warning-subtle: #fffbeb;
+  --danger: #b91c1c;
+  --danger-subtle: #fef2f2;
+  --danger-foreground: #ffffff;
+  --info: var(--accent);
+  --info-subtle: #eff4ff;
+
+  /* App UI: claim labels */
+  --claim-customer: var(--info);
+  --claim-customer-bg: var(--info-subtle);
+  --claim-company: #0f766e;
+  --claim-company-bg: #f0fdfa;
+  --claim-user: #475569;
+  --claim-user-bg: var(--muted);
+  --claim-assumption: var(--warning);
+  --claim-assumption-bg: var(--warning-subtle);
+  --claim-recommendation: #7c3aed;
+  --claim-recommendation-bg: #f5f3ff;
+  --claim-unsupported: var(--danger);
+  --claim-unsupported-bg: var(--danger-subtle);
+
+  --focus-ring: 0 0 0 2px #fafafa, 0 0 0 4px #0052ff;
+
+  /* Sizes (App UI) */
+  --control-h: 48px;
+  --control-h-lg: 56px;
+  --control-h-app: 40px;
+  --control-h-sm: 32px;
+  --sidebar-w: 240px;
+  --sidebar-w-collapsed: 64px;
+  --topbar-h: 56px;
+  --row-h: 44px;
+  --row-h-compact: 36px;
+  --panel-w: 360px;
+
+  /* shadcn/ui variable mapping (design system App UI › Mapping to shadcn/ui) */
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --card-foreground: var(--foreground);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-foreground);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--danger-foreground);
+  --input: var(--border);
+  --radius: 8px; /* radius-lg */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  /* shadcn's "accent" is a hover wash — mapped to accent-subtle, NOT the brand accent */
+  --color-accent: var(--accent-subtle);
+  --color-accent-foreground: var(--foreground);
+  --color-brand: var(--accent);
+  --color-brand-secondary: var(--accent-secondary);
+  --color-brand-text: var(--accent-text);
+  --color-brand-line: var(--accent-line);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+
+  --color-claim-customer: var(--claim-customer);
+  --color-claim-customer-bg: var(--claim-customer-bg);
+  --color-claim-company: var(--claim-company);
+  --color-claim-company-bg: var(--claim-company-bg);
+  --color-claim-user: var(--claim-user);
+  --color-claim-user-bg: var(--claim-user-bg);
+  --color-claim-assumption: var(--claim-assumption);
+  --color-claim-assumption-bg: var(--claim-assumption-bg);
+  --color-claim-recommendation: var(--claim-recommendation);
+  --color-claim-recommendation-bg: var(--claim-recommendation-bg);
+  --color-claim-unsupported: var(--claim-unsupported);
+  --color-claim-unsupported-bg: var(--claim-unsupported-bg);
+
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-display: "Calistoga", Georgia, serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --radius-xs: 2px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  /* App type styles (design system › App) */
+  --text-page-title: 1.75rem;
+  --text-page-title--line-height: 1.2;
+  --text-panel-title: 1rem;
+  --text-panel-title--line-height: 1.5;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.43;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.33;
+  --text-mono-sm: 0.8125rem;
+  --text-mono-sm--line-height: 1.4;
+
+  --spacing-control-app: var(--control-h-app);
+  --spacing-control-sm: var(--control-h-sm);
+  --spacing-sidebar: var(--sidebar-w);
+  --spacing-sidebar-collapsed: var(--sidebar-w-collapsed);
+  --spacing-topbar: var(--topbar-h);
+  --spacing-row: var(--row-h);
+  --spacing-panel: var(--panel-w);
+}
+
+@theme {
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-accent: 0 4px 14px rgba(0, 82, 255, 0.25);
+  --shadow-accent-lg: 0 8px 24px rgba(0, 82, 255, 0.35);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background font-sans text-base text-foreground;
+  }
+  /* Keyboard focus = 2px page-coloured gap + 2px solid accent ring */
+  :focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

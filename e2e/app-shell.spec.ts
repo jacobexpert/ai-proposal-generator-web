@@ -15,6 +15,14 @@ test.describe("App shell", () => {
     await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Dashboard");
   });
 
+  test("keeps the active item readable after a mouse click (brand text on brand wash)", async ({ page }) => {
+    await page.goto("/proposals");
+    const dashboard = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Dashboard" });
+    await dashboard.click();
+    await expect(dashboard).toHaveAttribute("aria-current", "page");
+    await expect(dashboard).toHaveCSS("color", "rgb(0, 82, 255)");
+  });
+
   test("collapses the sidebar and keeps the choice after reload", async ({ page }) => {
     await page.goto("/settings");
     await page.getByRole("button", { name: "Collapse sidebar" }).click();

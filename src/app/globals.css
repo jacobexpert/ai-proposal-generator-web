@@ -1,28 +1,36 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Class-based dark variant (shadcn components carry `dark:` classes). The MVP ships Light only. */
+@custom-variant dark (&:is(.dark *));
 
 /*
- * Design system: "Minimalist Modern" (+ App UI section).
- * Token values mirror project/tokens.json of the design system artifact.
- * Only the Light theme ships in the MVP (App UI: "One theme: Light").
+ * Design system: "Minimalist Modern" + its App UI section.
+ * Values mirror project/tokens.json of the design system artifact.
+ *
+ * Naming: the design system's brand colour ("accent" in tokens.json) is exposed here as
+ * `--brand*`, because shadcn/ui reserves `--accent` for a neutral hover wash. Keeping the
+ * two apart means `shadcn init/add` can never overwrite the brand colour again.
+ * Only DS values belong in this block — never paste shadcn theme presets over it.
  */
 :root {
-  /* Brand */
+  /* ── Design system: brand & surfaces ─────────────────────────────── */
   --background: #fafafa;
   --foreground: #0f172a;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
-  --accent: #0052ff;
-  --accent-secondary: #4d7cff;
-  --accent-text: var(--accent);
-  --accent-foreground: #ffffff;
-  --accent-subtle: #0052ff0d;
-  --accent-line: #0052ff4d;
-  --border: #e2e8f0;
   --card: #ffffff;
-  --ring: var(--accent);
+  --border: #e2e8f0;
 
-  /* App UI: status */
+  --brand: #0052ff; /* DS token `accent` (Electric Blue) */
+  --brand-secondary: #4d7cff; /* DS `accent-secondary` — gradient end only */
+  --brand-text: var(--brand); /* DS `accent-text` */
+  --brand-foreground: #ffffff; /* DS `accent-foreground` */
+  --brand-subtle: #0052ff0d; /* DS `accent-subtle` (5%) */
+  --brand-line: #0052ff4d; /* DS `accent-line` (30%) */
+
+  /* ── App UI: status ──────────────────────────────────────────────── */
   --success: #047857;
   --success-subtle: #ecfdf5;
   --warning: #b45309;
@@ -30,10 +38,10 @@
   --danger: #b91c1c;
   --danger-subtle: #fef2f2;
   --danger-foreground: #ffffff;
-  --info: var(--accent);
+  --info: var(--brand);
   --info-subtle: #eff4ff;
 
-  /* App UI: claim labels */
+  /* ── App UI: claim labels ────────────────────────────────────────── */
   --claim-customer: var(--info);
   --claim-customer-bg: var(--info-subtle);
   --claim-company: #0f766e;
@@ -47,9 +55,10 @@
   --claim-unsupported: var(--danger);
   --claim-unsupported-bg: var(--danger-subtle);
 
+  /* Keyboard focus: 2px page-coloured gap + 2px solid brand ring */
   --focus-ring: 0 0 0 2px #fafafa, 0 0 0 4px #0052ff;
 
-  /* Sizes (App UI) */
+  /* ── App UI: sizes ───────────────────────────────────────────────── */
   --control-h: 48px;
   --control-h-lg: 56px;
   --control-h-app: 40px;
@@ -61,18 +70,37 @@
   --row-h-compact: 36px;
   --panel-w: 360px;
 
-  /* shadcn/ui variable mapping (design system App UI › Mapping to shadcn/ui) */
+  /* ── shadcn/ui variables → design-system tokens (App UI › Mapping to shadcn/ui) ── */
+  --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
-  --card-foreground: var(--foreground);
-  --primary: var(--accent);
-  --primary-foreground: var(--accent-foreground);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: var(--muted);
   --secondary-foreground: var(--foreground);
+  --accent: var(--brand-subtle); /* shadcn "accent" = hover/selected wash */
+  --accent-foreground: var(--foreground);
   --destructive: var(--danger);
   --destructive-foreground: var(--danger-foreground);
   --input: var(--border);
-  --radius: 8px; /* radius-lg */
+  --ring: var(--brand);
+  --radius: 8px; /* DS radius-lg */
+
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: var(--brand-subtle);
+  --sidebar-accent-foreground: var(--brand-text);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand);
+
+  /* The design system defines no data-viz palette yet: charts use brand + slate steps. */
+  --chart-1: #0052ff;
+  --chart-2: #4d7cff;
+  --chart-3: #0f766e;
+  --chart-4: #64748b;
+  --chart-5: #0f172a;
 }
 
 @theme inline {
@@ -88,18 +116,20 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  /* shadcn's "accent" is a hover wash — mapped to accent-subtle, NOT the brand accent */
-  --color-accent: var(--accent-subtle);
-  --color-accent-foreground: var(--foreground);
-  --color-brand: var(--accent);
-  --color-brand-secondary: var(--accent-secondary);
-  --color-brand-text: var(--accent-text);
-  --color-brand-line: var(--accent-line);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-brand: var(--brand);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-text: var(--brand-text);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-line: var(--brand-line);
 
   --color-success: var(--success);
   --color-success-subtle: var(--success-subtle);
@@ -123,11 +153,28 @@
   --color-claim-unsupported: var(--claim-unsupported);
   --color-claim-unsupported-bg: var(--claim-unsupported-bg);
 
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Fonts are self-hosted from @fontsource (see src/app/layout.tsx) */
   --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-heading: "Calistoga", Georgia, serif;
   --font-display: "Calistoga", Georgia, serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 
   --radius-xs: 2px;
+  --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
   --radius-xl: 12px;
@@ -147,6 +194,7 @@
 
   --spacing-control-app: var(--control-h-app);
   --spacing-control-sm: var(--control-h-sm);
+  --spacing-control: var(--control-h);
   --spacing-sidebar: var(--sidebar-w);
   --spacing-sidebar-collapsed: var(--sidebar-w-collapsed);
   --spacing-topbar: var(--topbar-h);
@@ -165,15 +213,16 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   html {
     -webkit-font-smoothing: antialiased;
+    @apply font-sans;
   }
   body {
     @apply bg-background font-sans text-base text-foreground;
   }
-  /* Keyboard focus = 2px page-coloured gap + 2px solid accent ring */
+  /* Keyboard focus only (not mouse clicks): 2px page-coloured gap + 2px solid brand ring */
   :focus-visible {
     outline: 2px solid transparent;
     box-shadow: var(--focus-ring);

@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   description: "Evidence-backed IT proposals from RFPs, requirements and approved company knowledge.",
 };
 
+/*
+ * Fonts follow the design system (Inter, Calistoga, JetBrains Mono), self-hosted via @fontsource:
+ * no Google Fonts request at build or run time. Do not add next/font/google presets here.
+ */
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">

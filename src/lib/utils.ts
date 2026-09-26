@@ -1,18 +1,16 @@
-import { clsx, type ClassValue } from "clsx";
-import { extendTailwindMerge } from "tailwind-merge";
+import { createCn } from "cn/config";
 
-/*
- * Teach tailwind-merge the design-system font sizes (`text-caption`, …) so they are not
- * mistaken for text colours and dropped when combined with e.g. `text-info`.
+/**
+ * Class-name merging (shadcn's `cn` engine) taught the design-system font sizes, so
+ * `text-caption`, `text-body-sm`, … are not mistaken for text colours and dropped
+ * when combined with e.g. `text-info`.
+ *
+ * Always import `cn` from "@/lib/utils" — never from "cn" directly (ESLint enforces this).
  */
-const twMerge = extendTailwindMerge({
+export const cn = createCn({
   extend: {
     theme: {
       text: ["page-title", "panel-title", "body-sm", "caption", "mono-sm"],
     },
   },
 });
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}

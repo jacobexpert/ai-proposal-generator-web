@@ -46,7 +46,7 @@ export function SystemHealthPanel() {
           </h2>
           <p className="mt-0.5 font-mono text-mono-sm text-muted-foreground">{env.NEXT_PUBLIC_API_BASE_URL}</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
+        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
           <RefreshCw className={isFetching ? "animate-spin" : undefined} />
           Refresh
         </Button>

@@ -109,7 +109,7 @@ function SidebarLink({ item, active, collapsed }: { item: NavItem; active: boole
   if (!collapsed) return link;
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipTrigger render={link} />
       <TooltipContent side="right">{item.label}</TooltipContent>
     </Tooltip>
   );

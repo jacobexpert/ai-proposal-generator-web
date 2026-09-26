@@ -10,6 +10,8 @@ UI follows the **Minimalist Modern** design system and its **App UI** section. T
 
 ## Getting started
 
+Requires **Node.js ≥ 22.12** (Vite 8 / Rolldown used by Vitest). `.npmrc` sets `engine-strict=true`, so an older Node fails the install with a clear error instead of silently skipping native packages.
+
 ```bash
 cp .env.example .env.local   # set NEXT_PUBLIC_API_BASE_URL (default http://localhost:8080)
 npm install

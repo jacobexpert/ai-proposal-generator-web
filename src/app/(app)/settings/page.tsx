@@ -1,16 +1,6 @@
-import { Settings } from "lucide-react";
-import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { ComingSoon } from "@/components/layout/coming-soon";
-import { PageHeader } from "@/components/layout/page-header";
-
-export const metadata: Metadata = { title: "Settings" };
-
+/** Settings has sub-pages (Members now; General with US-FE-45): open the first one. */
 export default function SettingsPage() {
-  return (
-    <>
-      <PageHeader title="Settings" />
-      <ComingSoon icon={Settings} message="Workspace and member settings will be available here." />
-    </>
-  );
+  redirect("/settings/members");
 }

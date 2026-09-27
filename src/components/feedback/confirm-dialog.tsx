@@ -25,6 +25,8 @@ export interface ConfirmDialogProps {
   tone?: "default" | "destructive";
   /** May return a promise: the dialog stays open (with a spinner) until it settles, and shows the error if it fails. */
   onConfirm: () => unknown | Promise<unknown>;
+  /** Screen-specific wording for a failure (e.g. a 409 business rule); falls back to the generic mapping. */
+  describeError?: (error: unknown) => string | undefined;
 }
 
 /** Confirmation for irreversible or impactful actions (US-FE-04 AC3). */
@@ -37,6 +39,7 @@ export function ConfirmDialog({
   cancelLabel = "Cancel",
   tone = "default",
   onConfirm,
+  describeError,
 }: ConfirmDialogProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,8 +58,9 @@ export function ConfirmDialog({
       setPending(false);
       onOpenChange(false);
     } catch (e) {
+      const custom = describeError?.(e);
       const ui = describeApiError(e);
-      setError(`${ui.title}. ${ui.message}`);
+      setError(custom ?? `${ui.title}. ${ui.message}`);
       setPending(false);
     }
   };

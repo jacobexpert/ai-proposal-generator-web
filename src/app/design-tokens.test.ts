@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -42,5 +42,28 @@ describe("design tokens in globals.css", () => {
     expect(css).toContain('--font-sans: "Inter Variable"');
     expect(css).toContain('--font-heading: "Calistoga"');
     expect(css).not.toMatch(/oklch\(/);
+  });
+
+  it("defines a Tailwind colour for every design-system colour class used in src", () => {
+    // A class like `text-danger-foreground` silently does nothing when `--color-danger-foreground`
+    // is missing from @theme (that is how destructive buttons lost their white text).
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) walk(path);
+        else if (/\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name)) files.push(path);
+      }
+    };
+    walk(join(process.cwd(), "src"));
+    const used = new Set<string>();
+    const pattern =
+      /(?:^|[\s"'`:])!?(?:bg|text|border|ring|outline|fill|stroke|from|to|via|accent|decoration)-((?:brand|danger|success|warning|info|claim)(?:-[a-z]+)*)(?:\/\d+)?(?=[\s"'`]|$)/g;
+    for (const file of files) {
+      for (const match of readFileSync(file, "utf8").matchAll(pattern)) used.add(match[1]!);
+    }
+    expect(used.size).toBeGreaterThan(5);
+    const missing = [...used].filter((name) => !css.includes(`--color-${name}:`));
+    expect(missing).toEqual([]);
   });
 });

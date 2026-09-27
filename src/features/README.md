@@ -18,4 +18,5 @@ Rules:
 - A feature may import from `components/`, `lib/` and `config/`, not from another feature's internals. Anything shared by two features moves to `components/` or `lib/`.
 - Shared UI primitives live in `components/ui`; do not re-style them per feature.
 - A feature with an `index.ts` is imported only through it (e.g. `@/features/workspaces`).
-- Current features: `auth` (US-FE-02), `workspaces` (US-FE-03: current user, workspace context, switcher, profile), `system-health` (developer-only backend status, US-FE-01 AC5), `documents` (US-FE-08: `DocumentUploader`, reused by the proposal wizard).
+- Current features: `auth` (US-FE-02, US-FE-42), `invitations` (US-FE-43), `members` (US-FE-44), `workspaces` (US-FE-03, US-FE-45: current user, workspace context, switcher, profile, general settings), `proposals` (US-FE-05/06/07: list, wizard, overview, lifecycle), `system-health` (developer-only backend status, US-FE-01 AC5).
+- Proposal tabs: `app/(app)/proposals/[id]/[tab]/page.tsx` is a placeholder; a tab's own folder (e.g. `documents/page.tsx`, FE 02) takes precedence automatically.

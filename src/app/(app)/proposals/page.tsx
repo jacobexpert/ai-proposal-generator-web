@@ -1,16 +1,15 @@
-import { FileText } from "lucide-react";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
-import { ComingSoon } from "@/components/layout/coming-soon";
-import { PageHeader } from "@/components/layout/page-header";
+import { LoadingState } from "@/components/feedback/loading-state";
+import { ProposalList } from "@/features/proposals/proposal-list";
 
 export const metadata: Metadata = { title: "Proposals" };
 
 export default function ProposalsPage() {
   return (
-    <>
-      <PageHeader title="Proposals" />
-      <ComingSoon icon={FileText} message="Proposals in this workspace will be listed here." />
-    </>
+    <Suspense fallback={<LoadingState label="Loading proposals" />}>
+      <ProposalList title="Proposals" description="Every proposal in this workspace." />
+    </Suspense>
   );
 }

@@ -18,4 +18,4 @@ Rules:
 - A feature may import from `components/`, `lib/` and `config/`, not from another feature's internals. Anything shared by two features moves to `components/` or `lib/`.
 - Shared UI primitives live in `components/ui`; do not re-style them per feature.
 - A feature with an `index.ts` is imported only through it (e.g. `@/features/workspaces`).
-- Current features: `auth` (US-FE-02), `workspaces` (US-FE-03: current user, workspace context, switcher, profile), `system-health` (developer-only backend status, US-FE-01 AC5).
+- Current features: `auth` (US-FE-02), `workspaces` (US-FE-03: current user, workspace context, switcher, profile), `system-health` (developer-only backend status, US-FE-01 AC5), `documents` (US-FE-08: `DocumentUploader`, reused by the proposal wizard).

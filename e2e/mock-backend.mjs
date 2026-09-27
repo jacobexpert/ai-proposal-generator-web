@@ -55,6 +55,16 @@ const readJson = (req) =>
     });
   });
 
+/** Uploaded documents (US-FE-08): a file named like "eicar*" is treated as malware (422). */
+const DOCUMENTS_PATH = /^\/api\/proposals\/([0-9a-f-]{36})\/documents$/;
+let documentSeq = 0;
+const readText = (req) =>
+  new Promise((resolve) => {
+    const chunks = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("latin1")));
+  });
+
 createServer(async (req, res) => {
   const { pathname } = new URL(req.url, "http://localhost");
   const authed = /^Bearer access-\d+$/.test(req.headers.authorization ?? "");
@@ -101,6 +111,33 @@ createServer(async (req, res) => {
     if (!INVITATIONS[token]) return problem(res, 404, "Not Found");
     if (INVITATIONS[token].email !== E2E_USER.email) return problem(res, 403, "Forbidden");
     return json(res, 200, { ...E2E_WORKSPACES[1], createdAt: "2026-09-01T00:00:00Z" });
+  }
+  const documentsMatch = DOCUMENTS_PATH.exec(pathname);
+  if (req.method === "POST" && documentsMatch) {
+    if (!authed) return problem(res, 401, "Unauthorized");
+    const body = await readText(req);
+    const fileName = /filename="([^"]*)"/.exec(body)?.[1] ?? "file";
+    const category = new URL(req.url, "http://localhost").searchParams.get("category") ?? "OTHER";
+    documentSeq += 1;
+    const id = `00000000-0000-4000-8000-${String(documentSeq).padStart(12, "0")}`;
+    if (/^eicar/i.test(fileName)) {
+      return json(res, 422, { type: "about:blank", title: "Unprocessable Entity", status: 422, documentId: id }, {
+        "Content-Type": "application/problem+json",
+      });
+    }
+    return json(res, 201, {
+      id,
+      proposalId: documentsMatch[1],
+      fileName,
+      contentType: "application/pdf",
+      sizeBytes: body.length,
+      category,
+      checksumSha256: "0".repeat(64),
+      processingStatus: "UPLOADED",
+      uploadedBy: ME.id,
+      createdAt: "2026-09-27T08:00:00Z",
+      updatedAt: "2026-09-27T08:00:00Z",
+    });
   }
   if (req.method === "GET" && pathname === "/api/me") {
     return authed ? json(res, 200, ME) : problem(res, 401, "Unauthorized");

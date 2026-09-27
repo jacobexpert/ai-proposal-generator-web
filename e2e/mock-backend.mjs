@@ -23,6 +23,26 @@ const INVITATIONS = {
   "invite-for-colleague": { email: "colleague@example.com" },
 };
 
+/** In-memory members / invitations of the first (OWNER) workspace, for US-FE-44. */
+const MEMBERS = [
+  {
+    userId: "11111111-2222-4333-8444-555555555555",
+    email: E2E_USER.email,
+    displayName: "Jackie Tran",
+    role: "OWNER",
+    joinedAt: "2026-09-01T08:00:00Z",
+  },
+  {
+    userId: "22222222-3333-4444-8555-666666666666",
+    email: "alex@example.com",
+    displayName: "Alex Pham",
+    role: "MEMBER",
+    joinedAt: "2026-09-10T08:00:00Z",
+  },
+];
+const PENDING = [];
+let invitationSeq = 0;
+
 let generation = 0;
 const tokens = () => {
   generation += 1;
@@ -111,7 +131,6 @@ createServer(async (req, res) => {
     if (!INVITATIONS[token]) return problem(res, 404, "Not Found");
     if (INVITATIONS[token].email !== E2E_USER.email) return problem(res, 403, "Forbidden");
     return json(res, 200, { ...E2E_WORKSPACES[1], createdAt: "2026-09-01T00:00:00Z" });
-  }
   const documentsMatch = DOCUMENTS_PATH.exec(pathname);
   if (req.method === "POST" && documentsMatch) {
     if (!authed) return problem(res, 401, "Unauthorized");
@@ -138,6 +157,57 @@ createServer(async (req, res) => {
       createdAt: "2026-09-27T08:00:00Z",
       updatedAt: "2026-09-27T08:00:00Z",
     });
+  const members = pathname.match(/^\/api\/workspaces\/([0-9a-f-]{36})\/(members|invitations)(?:\/([0-9a-f-]{36}))?$/);
+  if (members) {
+    if (!authed) return problem(res, 401, "Unauthorized");
+    const [, workspaceId, kind, id] = members;
+    const owner = workspaceId === E2E_WORKSPACES[0].id;
+    if (kind === "members" && req.method === "GET" && !id) return json(res, 200, owner ? MEMBERS : MEMBERS.slice(0, 1));
+    if (!owner) return problem(res, 403, "Forbidden");
+    if (kind === "invitations" && req.method === "GET" && !id) return json(res, 200, PENDING);
+    if (kind === "invitations" && req.method === "POST" && !id) {
+      const { email, role } = await readJson(req);
+      if (MEMBERS.some((m) => m.email === email)) return problem(res, 409, "Conflict");
+      invitationSeq += 1;
+      const invitation = {
+        id: `00000000-0000-4000-8000-${String(invitationSeq).padStart(12, "0")}`,
+        email,
+        role,
+        status: "PENDING",
+        createdAt: "2026-09-27T08:00:00Z",
+        expiresAt: "2026-10-04T08:00:00Z",
+      };
+      PENDING.splice(0, PENDING.length, ...PENDING.filter((i) => i.email !== email), invitation);
+      const token = `mock-token-${invitationSeq}`;
+      return json(res, 201, {
+        ...invitation,
+        invitationToken: token,
+        invitationUrl: `http://localhost:3100/invitations/accept?token=${token}`,
+      });
+    }
+    if (kind === "invitations" && req.method === "DELETE" && id) {
+      const index = PENDING.findIndex((i) => i.id === id);
+      if (index < 0) return problem(res, 404, "Not Found");
+      PENDING.splice(index, 1);
+      res.writeHead(204).end();
+      return;
+    }
+    const member = MEMBERS.find((m) => m.userId === id);
+    if (kind === "members" && id && !member) return problem(res, 404, "Not Found");
+    const owners = MEMBERS.filter((m) => m.role === "OWNER").length;
+    if (kind === "members" && req.method === "PATCH" && member) {
+      const { role } = await readJson(req);
+      if (member.role === "OWNER" && role !== "OWNER" && owners === 1) return problem(res, 409, "Conflict");
+      member.role = role;
+      res.writeHead(204).end();
+      return;
+    }
+    if (kind === "members" && req.method === "DELETE" && member) {
+      if (member.role === "OWNER" && owners === 1) return problem(res, 409, "Conflict");
+      MEMBERS.splice(MEMBERS.indexOf(member), 1);
+      res.writeHead(204).end();
+      return;
+    }
   }
   if (req.method === "GET" && pathname === "/api/me") {
     return authed ? json(res, 200, ME) : problem(res, 401, "Unauthorized");

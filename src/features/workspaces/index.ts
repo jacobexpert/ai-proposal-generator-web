@@ -1,5 +1,5 @@
 /** Public API of the workspaces feature; other features import from here only. */
-export type { CurrentUser, WorkspaceItem, WorkspaceRole } from "./api";
+export { workspaceRoleSchema, type CurrentUser, type WorkspaceItem, type WorkspaceRole } from "./api";
 export { meKey, workspaceHeader, workspaceKey } from "./query-keys";
 export { ROLE_LABEL } from "./role-label";
 export { useCurrentUser } from "./use-current-user";

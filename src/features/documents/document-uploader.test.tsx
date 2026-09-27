@@ -211,4 +211,18 @@ describe("DocumentUploader", () => {
     await user.click(screen.getByRole("button", { name: "Clear uploaded" }));
     expect(rows()).toHaveLength(0);
   });
+
+  it("reports the queue to the host: chosen, uploading, done", async () => {
+    const onQueueChange = vi.fn();
+    const { choose, user } = setup({ onQueueChange });
+    expect(onQueueChange).toHaveBeenLastCalledWith({ active: 0, ready: 0 });
+    await choose(pdf("a.pdf"), pdf("b.pdf"));
+    expect(onQueueChange).toHaveBeenLastCalledWith({ active: 0, ready: 2 });
+    await user.click(screen.getByRole("button", { name: "Upload 2 files" }));
+    expect(onQueueChange).toHaveBeenLastCalledWith({ active: 2, ready: 0 });
+    await respond(() => requests()[0].succeed());
+    expect(onQueueChange).toHaveBeenLastCalledWith({ active: 1, ready: 0 });
+    await respond(() => requests()[1].problem(415));
+    expect(onQueueChange).toHaveBeenLastCalledWith({ active: 0, ready: 0 });
+  });
 });

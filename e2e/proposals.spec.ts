@@ -17,17 +17,25 @@ test.describe("Proposals (US-FE-05, 06, 07)", () => {
 
     await expect(page).toHaveURL(/proposalId=.+&step=2$/);
     await expect(page.getByRole("heading", { name: "Customer documents" })).toBeVisible();
+    // FE-06.4: upload the RFP right here (default category RFP).
+    await page
+      .getByTestId("document-file-input")
+      .setInputFiles({ name: "rfp.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.7 test") });
+    await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
+    await page.getByRole("button", { name: "Upload" }).click();
+    await expect(page.getByTestId("upload-row").filter({ hasText: "rfp.pdf" })).toContainText("Uploaded");
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByRole("heading", { name: "Company knowledge" })).toBeVisible();
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByText("Input required", { exact: true })).toBeVisible(); // template sections
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByRole("button", { name: /Analyze documents/ })).toBeDisabled();
+    await expect(page.getByText("Documents uploaded")).toBeVisible(); // status after the first upload
 
-    // Leaving and coming back keeps the draft (AC4) — it is on the dashboard.
+    // Leaving and coming back keeps the proposal (AC4) — it is on the dashboard.
     await page.goto(`/?q=${encodeURIComponent(name)}`);
     const row = page.getByRole("row", { name: new RegExp(name) });
-    await expect(row).toContainText("Draft");
+    await expect(row).toContainText("Documents uploaded");
     await row.getByRole("link", { name }).click();
 
     await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();

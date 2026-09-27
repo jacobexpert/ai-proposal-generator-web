@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, FileText, RotateCcw, Upload, X } from "lucide-react";
-import { useId, useRef, useState, type DragEvent } from "react";
+import { useEffect, useId, useRef, useState, type DragEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +30,18 @@ export interface DocumentUploaderProps {
   onUploaded?: (document: DocumentItem) => void;
   /** Refresh document lists: called after a 201 or a 422 (the API records the rejected file). */
   onDocumentsChanged?: () => void;
+  /**
+   * Files still in the queue: `active` = waiting or uploading, `ready` = chosen but not sent yet.
+   * Hosts that can unmount the uploader (e.g. the Create Proposal wizard) use it to avoid
+   * cancelling uploads or dropping chosen files.
+   */
+  onQueueChange?: (queue: UploadQueueSummary) => void;
   className?: string;
+}
+
+export interface UploadQueueSummary {
+  active: number;
+  ready: number;
 }
 
 const CATEGORY_ITEMS = DOCUMENT_CATEGORIES.map((value) => ({ value, label: CATEGORY_LABEL[value] }));
@@ -59,6 +70,7 @@ export function DocumentUploader({
   defaultCategory = "RFP",
   onUploaded,
   onDocumentsChanged,
+  onQueueChange,
   className,
 }: DocumentUploaderProps) {
   const uploads = useDocumentUploads({ workspaceId, proposalId, defaultCategory, onUploaded, onDocumentsChanged });
@@ -69,6 +81,14 @@ export function DocumentUploader({
   const readyCount = uploads.items.filter((i) => i.status === "ready").length;
   const uploadedCount = uploads.items.filter((i) => i.status === "uploaded").length;
   const activeCount = uploads.items.filter((i) => i.status === "uploading" || i.status === "queued").length;
+
+  const queueListener = useRef(onQueueChange);
+  useEffect(() => {
+    queueListener.current = onQueueChange;
+  });
+  useEffect(() => {
+    queueListener.current?.({ active: activeCount, ready: readyCount });
+  }, [activeCount, readyCount]);
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();

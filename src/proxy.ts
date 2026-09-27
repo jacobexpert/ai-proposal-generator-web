@@ -12,7 +12,7 @@ import {
 } from "@/server/session";
 
 /** Pages reachable without a session. */
-const PUBLIC_PATHS = new Set(["/login"]);
+const PUBLIC_PATHS = new Set(["/login", "/register"]);
 
 /**
  * Route protection (US-FE-02 AC1). This is a UX guard only: every API call is still
@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
 
   let response: NextResponse;
   if (hasSession && isPublic) {
-    // Already signed in: leave the login page.
+    // Already signed in: leave the sign-in / sign-up page (US-FE-42 AC5).
     const target = safeReturnUrl(request.nextUrl.searchParams.get("returnUrl"));
     response = NextResponse.redirect(new URL(target, request.url));
   } else if (!hasSession && !isPublic) {

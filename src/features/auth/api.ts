@@ -1,9 +1,14 @@
+import { z } from "zod";
+
 import { ApiError, NetworkError, parseRetryAfter, type ProblemDetail } from "@/lib/api/client";
 
-import type { LoginInput } from "./schemas";
+import type { LoginInput, RegisterRequest } from "./schemas";
 
 /** Browser → BFF auth calls (same origin). Tokens never reach JavaScript: the BFF sets HttpOnly cookies. */
-async function postAuth(path: "/api/auth/login" | "/api/auth/logout", body?: unknown): Promise<void> {
+async function postAuth(
+  path: "/api/auth/login" | "/api/auth/logout" | "/api/auth/register",
+  body?: unknown,
+): Promise<Response> {
   let response: Response;
   try {
     response = await fetch(path, {
@@ -19,7 +24,16 @@ async function postAuth(path: "/api/auth/login" | "/api/auth/logout", body?: unk
     const problem = (await response.json().catch(() => null)) as ProblemDetail | null;
     throw new ApiError(response.status, problem, parseRetryAfter(response.headers.get("retry-after")));
   }
+  return response;
 }
 
-export const login = (input: LoginInput) => postAuth("/api/auth/login", input);
-export const logout = () => postAuth("/api/auth/logout");
+export const login = async (input: LoginInput) => void (await postAuth("/api/auth/login", input));
+export const logout = async () => void (await postAuth("/api/auth/logout"));
+
+const registeredSchema = z.object({ workspaceId: z.guid() });
+
+/** Creates the account and signs in (the BFF sets the session cookies). Returns the new workspace. */
+export async function register(input: RegisterRequest): Promise<{ workspaceId: string }> {
+  const response = await postAuth("/api/auth/register", input);
+  return registeredSchema.parse(await response.json());
+}

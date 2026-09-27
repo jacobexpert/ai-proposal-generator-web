@@ -25,6 +25,12 @@ describe("proxy (route protection)", () => {
     expect(res.headers.get("location")).toBe("http://localhost:3000/login");
   });
 
+  it("keeps /register public and sends signed-in users to the dashboard (US-FE-42 AC5)", async () => {
+    expect((await proxy(page("/register"))).headers.get("location")).toBeNull();
+    const res = await proxy(page("/register", { apg_at: "access-1" }));
+    expect(res.headers.get("location")).toBe("http://localhost:3000/");
+  });
+
   it("lets signed-in users through", async () => {
     const res = await proxy(page("/proposals", { apg_at: "access-1" }));
     expect(res.headers.get("location")).toBeNull();

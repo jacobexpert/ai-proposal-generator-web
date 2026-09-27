@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { loginSchema } from "@/features/auth/schemas";
-import { backendFetch, forwardedFor, problem, relayError } from "@/server/backend";
+import { backendFetch, forwardedFor, problem, relayError, validationProblem } from "@/server/backend";
 import { isSameOriginRequest } from "@/server/csrf";
 import { setSessionCookies, tokenResponseSchema } from "@/server/session";
 
@@ -13,17 +13,7 @@ export async function POST(request: NextRequest) {
   if (!isSameOriginRequest(request)) return problem(403, "Forbidden", "Cross-site request rejected.");
 
   const parsed = loginSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return Response.json(
-      {
-        type: "about:blank",
-        title: "Bad Request",
-        status: 400,
-        errors: parsed.error.issues.map((i) => ({ field: String(i.path[0] ?? ""), message: i.message })),
-      },
-      { status: 400, headers: { "Content-Type": "application/problem+json" } },
-    );
-  }
+  if (!parsed.success) return validationProblem(parsed.error.issues);
 
   const clientIp = forwardedFor(request);
   let response: Response;

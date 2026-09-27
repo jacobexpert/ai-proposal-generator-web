@@ -34,6 +34,19 @@ export function problem(status: number, title: string, detail?: string): Respons
   );
 }
 
+/** 400 Problem Details with field errors, in the API's shape (`errors[{field, message}]`). */
+export function validationProblem(issues: readonly { path: readonly PropertyKey[]; message: string }[]): Response {
+  return Response.json(
+    {
+      type: "about:blank",
+      title: "Bad Request",
+      status: 400,
+      errors: issues.map((i) => ({ field: String(i.path[0] ?? ""), message: i.message })),
+    },
+    { status: 400, headers: { "Content-Type": "application/problem+json", "Cache-Control": "no-store" } },
+  );
+}
+
 const RELAYED_ERROR_HEADERS = ["content-type", "retry-after", "x-request-id"];
 
 /** Relay an API error response (status + Problem Details body + Retry-After) to the browser. */

@@ -59,6 +59,12 @@ createServer(async (req, res) => {
       ? json(res, 200, tokens())
       : problem(res, 401, "Unauthorized");
   }
+  if (req.method === "POST" && pathname === "/api/auth/register") {
+    const body = await readJson(req);
+    if (body.email === E2E_USER.email) return problem(res, 409, "Conflict");
+    // The new account's workspace is the second one of the mock user.
+    return json(res, 201, { ...tokens(), workspaceId: E2E_WORKSPACES[1].id });
+  }
   if (req.method === "POST" && pathname === "/api/auth/refresh") {
     const body = await readJson(req);
     return /^refresh-\d+$/.test(body.refreshToken ?? "") ? json(res, 200, tokens()) : problem(res, 401, "Unauthorized");

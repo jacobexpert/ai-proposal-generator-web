@@ -52,6 +52,7 @@ Validated with Zod at startup and build (`src/config/env.ts`); an invalid value 
 | Piece                          | Where                                                                                                       |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
 | Sign in / sign out             | `src/app/api/auth/login`, `src/app/api/auth/logout` (route handlers)                                        |
+| Sign up (US-FE-42)             | `src/app/api/auth/register` — same cookies as sign-in, plus `apg_ws` = the new workspace                    |
 | API proxy with token + refresh | `src/app/api/backend/[...path]` — allow-list: `api/**` except `api/auth/**`, and `actuator/health`          |
 | Cookies                        | `apg_at` (access, ~15 min) and `apg_rt` (refresh, 14 days): `HttpOnly; Secure; SameSite=Lax; Path=/`        |
 | CSRF                           | state-changing BFF requests must be same-origin (`src/server/csrf.ts`)                                      |

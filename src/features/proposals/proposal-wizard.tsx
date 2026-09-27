@@ -2,23 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Building2,
-  Check,
-  FileStack,
-  LoaderCircle,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Check, LoaderCircle, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { EmptyState } from "@/components/feedback/empty-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { PageHeader } from "@/components/layout/page-header";
@@ -27,6 +16,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DocumentUploader, documentsKey, type UploadQueueSummary } from "@/features/documents";
 import { useCurrentWorkspace } from "@/features/workspaces";
 import { applyFieldErrors, describeApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
@@ -46,7 +36,7 @@ import {
 } from "./proposal-form";
 import { proposalKey, proposalsKey, useProposal, useTemplate, useTemplates } from "./queries";
 import { QuickTemplateDialog } from "./quick-template-dialog";
-import { tabHref } from "./status";
+import { STATUS_LABEL, tabHref } from "./status";
 
 const STEPS = ["Basic info", "Documents", "Company knowledge", "Template", "Review"] as const;
 
@@ -60,6 +50,8 @@ export function ProposalWizard() {
   const rawStep = Number.parseInt(search.get("step") ?? "1", 10);
   const step = proposalId && rawStep >= 1 && rawStep <= STEPS.length ? rawStep : 1;
   const proposal = useProposal(workspace.id, proposalId);
+  /** Steps 2/3 have files chosen or uploading: leaving would drop or cancel them (FE-06.4). */
+  const [uploadsPending, setUploadsPending] = useState(false);
 
   const go = (next: number, id: string | undefined = proposalId) => {
     const params = new URLSearchParams();
@@ -98,7 +90,7 @@ export function ProposalWizard() {
   return (
     <>
       {header}
-      <WizardStepper current={step} canJump={!!proposal.data} onJump={(n) => go(n)} />
+      <WizardStepper current={step} canJump={!!proposal.data && !uploadsPending} onJump={(n) => go(n)} />
       <div className="max-w-4xl rounded-xl border border-border bg-card p-6">
         {step === 1 && (
           <BasicInfoStep
@@ -110,10 +102,24 @@ export function ProposalWizard() {
           />
         )}
         {step === 2 && (
-          <DocumentsStep kind="customer" onBack={() => go(1)} onNext={() => go(3)} proposalId={proposalId!} />
+          <DocumentsStep
+            kind="customer"
+            workspaceId={workspace.id}
+            proposalId={proposalId!}
+            onPendingChange={setUploadsPending}
+            onBack={() => go(1)}
+            onNext={() => go(3)}
+          />
         )}
         {step === 3 && (
-          <DocumentsStep kind="company" onBack={() => go(2)} onNext={() => go(4)} proposalId={proposalId!} />
+          <DocumentsStep
+            kind="company"
+            workspaceId={workspace.id}
+            proposalId={proposalId!}
+            onPendingChange={setUploadsPending}
+            onBack={() => go(2)}
+            onNext={() => go(4)}
+          />
         )}
         {step === 4 && proposal.data && (
           <TemplateStep workspaceId={workspace.id} proposal={proposal.data} onBack={() => go(3)} onNext={() => go(5)} />
@@ -312,21 +318,31 @@ function BasicInfoStep({
 }
 
 /**
- * AC5: steps 2 and 3 embed FE 02's `DocumentUploader` (US-FE-08) with the right default category.
- * Until it ships, the step explains that documents can be added later and lets the user continue.
+ * AC5 (FE-06.4): steps 2 and 3 embed FE 02's `DocumentUploader` (US-FE-08) — customer documents
+ * default to RFP, company knowledge to Company profile. Leaving the step would cancel uploads in
+ * flight or drop chosen files, so navigation waits until the queue is empty.
  */
 function DocumentsStep({
   kind,
+  workspaceId,
   proposalId,
+  onPendingChange,
   onBack,
   onNext,
 }: {
   kind: "customer" | "company";
+  workspaceId: string;
   proposalId: string;
+  onPendingChange: (pending: boolean) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
   const customer = kind === "customer";
+  const queryClient = useQueryClient();
+  const [queue, setQueue] = useState<UploadQueueSummary>({ active: 0, ready: 0 });
+  const blocked = queue.active > 0 || queue.ready > 0;
+  const files = (n: number) => `${n} file${n === 1 ? "" : "s"}`;
+
   return (
     <div>
       <h2 className="text-panel-title font-semibold text-foreground">
@@ -335,26 +351,42 @@ function DocumentsStep({
       <p className="mt-1 text-body-sm text-muted-foreground">
         {customer
           ? "The RFP, RFI, requirements and meeting notes from the customer."
-          : "Your company profile, capabilities and references that the proposal may cite."}
+          : "Your company profile, capabilities and references that the proposal may cite."}{" "}
+        Optional here — you can add documents later from the proposal&apos;s{" "}
+        <Link href={tabHref(proposalId, "documents")} className="font-medium text-brand-text hover:underline">
+          Documents tab
+        </Link>
+        .
       </p>
-      <div className="mt-5">
-        <EmptyState
-          icon={customer ? FileStack : Building2}
-          title="Document upload is coming soon"
-          description={`Uploading is being built (US-FE-08). You can continue now and add ${
-            customer ? "customer documents" : "company knowledge"
-          } later from the proposal's Documents tab.`}
-          action={
-            <Link
-              href={tabHref(proposalId, "documents")}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Open the Documents tab
-            </Link>
-          }
-        />
-      </div>
-      <StepNav onBack={onBack} onNext={onNext} />
+      <DocumentUploader
+        className="mt-5"
+        workspaceId={workspaceId}
+        proposalId={proposalId}
+        defaultCategory={customer ? "RFP" : "COMPANY_PROFILE"}
+        onDocumentsChanged={() => {
+          void queryClient.invalidateQueries({ queryKey: documentsKey(workspaceId, proposalId) });
+          // The first upload moves the proposal to DOCUMENTS_UPLOADED and bumps its version,
+          // which later steps send back when they save.
+          void queryClient.invalidateQueries({ queryKey: proposalKey(workspaceId, proposalId) });
+        }}
+        onQueueChange={(next) => {
+          setQueue(next);
+          onPendingChange(next.active > 0 || next.ready > 0);
+        }}
+      />
+      {blocked && (
+        <p id="uploads-pending" className="mt-4 text-body-sm text-muted-foreground">
+          {queue.active > 0
+            ? `Uploading ${files(queue.active)}. Wait until it finishes before leaving this step.`
+            : `${files(queue.ready)} chosen but not uploaded. Upload or remove ${queue.ready === 1 ? "it" : "them"} to continue.`}
+        </p>
+      )}
+      <StepNav
+        onBack={onBack}
+        onNext={onNext}
+        blocked={blocked}
+        describedBy={blocked ? "uploads-pending" : undefined}
+      />
     </div>
   );
 }
@@ -469,6 +501,7 @@ function ReviewStep({
     ["Deadline", formatDeadline(proposal.deadline)],
     ["Language · currency", `${language} · ${proposal.currency}`],
     ["Template", template.data ? `${template.data.name} (${template.data.sections.length} sections)` : "…"],
+    ["Status", STATUS_LABEL[proposal.status]],
   ];
   return (
     <div>
@@ -505,10 +538,10 @@ function ReviewStep({
                 Analyze documents
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Available once document upload and analysis ship (US-FE-08, US-FE-10).</TooltipContent>
+            <TooltipContent>Available once document analysis ships (US-FE-10).</TooltipContent>
           </Tooltip>
           <span id="analyze-hint" className="sr-only">
-            Available once document upload and analysis ship.
+            Available once document analysis ships.
           </span>
         </div>
       </div>
@@ -516,14 +549,27 @@ function ReviewStep({
   );
 }
 
-function StepNav({ onBack, onNext, pending }: { onBack: () => void; onNext: () => void; pending?: boolean }) {
+function StepNav({
+  onBack,
+  onNext,
+  pending,
+  blocked,
+  describedBy,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  pending?: boolean;
+  /** Navigation is not possible right now; `describedBy` points to the reason. */
+  blocked?: boolean;
+  describedBy?: string;
+}) {
   return (
     <div className="mt-6 flex justify-between gap-2 border-t border-border pt-5">
-      <Button type="button" variant="outline" onClick={onBack}>
+      <Button type="button" variant="outline" onClick={onBack} disabled={blocked} aria-describedby={describedBy}>
         <ArrowLeft />
         Back
       </Button>
-      <Button type="button" onClick={onNext} disabled={pending}>
+      <Button type="button" onClick={onNext} disabled={pending || blocked} aria-describedby={describedBy}>
         {pending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <ArrowRight />}
         Continue
       </Button>

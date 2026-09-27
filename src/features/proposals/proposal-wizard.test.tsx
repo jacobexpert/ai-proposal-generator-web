@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { FakeXhr } from "@/features/documents/test-utils";
 import { WorkspaceGate, WorkspaceProvider } from "@/features/workspaces";
 import { TEST_WORKSPACES } from "@/mocks/handlers";
 import { server } from "@/mocks/server";
@@ -26,7 +27,10 @@ beforeEach(() => {
   nav.current = createNavigation("/proposals/new");
   state = { proposals: [], templates: [TEMPLATE], requests: [] };
   server.use(...proposalApi(state));
+  FakeXhr.reset();
+  vi.stubGlobal("XMLHttpRequest", FakeXhr);
 });
+afterEach(() => vi.unstubAllGlobals());
 
 function setup(workspaceId: string = acme.id) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -142,7 +146,7 @@ describe("ProposalWizard (US-FE-06)", () => {
     expect(screen.getByRole("button", { name: "Create and continue" })).toBeDisabled();
   });
 
-  it("steps 2–5: documents placeholder, template sections, review without one-click generation (AC5, AC6)", async () => {
+  it("steps 2–5: optional documents, template sections, review without one-click generation (AC5, AC6)", async () => {
     const ID = "dddddddd-1111-4222-8333-444444444444";
     state.proposals = [makeProposal({ id: ID })];
     state.templates = [TEMPLATE, { ...TEMPLATE, id: "ffffffff-1111-4222-8333-444444444444", name: "Short form" }];
@@ -150,10 +154,8 @@ describe("ProposalWizard (US-FE-06)", () => {
     const user = setup();
 
     expect(await screen.findByText("Customer documents")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open the Documents tab" })).toHaveAttribute(
-      "href",
-      `/proposals/${ID}/documents`,
-    );
+    expect(screen.getByRole("link", { name: "Documents tab" })).toHaveAttribute("href", `/proposals/${ID}/documents`);
+    expect(screen.getByRole("button", { name: "Choose files" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(await screen.findByText("Company knowledge", { selector: "h2" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Continue" }));
@@ -175,6 +177,55 @@ describe("ProposalWizard (US-FE-06)", () => {
     expect(screen.getByRole("button", { name: /Analyze documents/ })).toBeDisabled();
     expect(screen.queryByRole("button", { name: /generate/i })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open proposal" })).toHaveAttribute("href", `/proposals/${ID}`);
+  });
+
+  it("steps 2/3 upload with the right default category and wait for the queue before moving on (AC5)", async () => {
+    const ID = "dddddddd-1111-4222-8333-444444444444";
+    state.proposals = [makeProposal({ id: ID, version: 1 })];
+    state.templates = [TEMPLATE, { ...TEMPLATE, id: "ffffffff-1111-4222-8333-444444444444", name: "Short form" }];
+    nav.current.set(`/proposals/new?proposalId=${ID}&step=2`);
+    const user = setup();
+    const input = async () => (await screen.findByTestId("document-file-input")) as HTMLInputElement;
+    const upload = userEvent.setup({ applyAccept: false });
+
+    // Step 2: customer documents default to RFP.
+    await upload.upload(await input(), new File(["%PDF-1.7"], "rfp.pdf"));
+    expect(screen.getByRole("combobox", { name: "Category for rfp.pdf" })).toHaveTextContent("RFP");
+    // Chosen but not sent: leaving would drop it.
+    expect(screen.getByText("1 file chosen but not uploaded. Upload or remove it to continue.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Basic info/ })).not.toBeInTheDocument(); // no jumping away
+
+    await user.click(screen.getByRole("button", { name: "Upload" }));
+    expect(FakeXhr.requests[0]!.url).toBe(`/api/backend/api/proposals/${ID}/documents?category=RFP`);
+    expect(screen.getByText("Uploading 1 file. Wait until it finishes before leaving this step.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+
+    // What the API does on the first upload (US-BE-07): new status, new version.
+    Object.assign(state.proposals[0]!, { status: "DOCUMENTS_UPLOADED", version: 2 });
+    await act(async () => FakeXhr.requests[0]!.succeed());
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    // Step 3: company knowledge defaults to Company profile.
+    expect(await screen.findByText("Company knowledge", { selector: "h2" })).toBeInTheDocument();
+    await upload.upload(await input(), new File(["profile"], "profile.md"));
+    expect(screen.getByRole("combobox", { name: "Category for profile.md" })).toHaveTextContent("Company profile");
+    await user.click(screen.getByRole("button", { name: "Remove profile.md" }));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    // Step 4 saves with the proposal's current version, not the one from before the upload.
+    await user.selectOptions(await screen.findByLabelText("Template"), "ffffffff-1111-4222-8333-444444444444");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() =>
+      expect(state.requests.find((r) => r.method === "PATCH")!.body).toEqual({
+        templateId: "ffffffff-1111-4222-8333-444444444444",
+        version: 2,
+      }),
+    );
+    expect(await screen.findByRole("heading", { name: "Review" })).toBeInTheDocument();
+    expect(screen.getByText("Documents uploaded")).toBeInTheDocument();
   });
 
   it("jumps back to a done step from the stepper", async () => {

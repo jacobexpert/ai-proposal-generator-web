@@ -5,6 +5,8 @@ import { signIn } from "./helpers";
 test.describe("Members & invitations (US-FE-44)", () => {
   test("an owner invites someone, gets the link once, then revokes the invitation", async ({ page }) => {
     await signIn(page, "/settings");
+    await expect(page).toHaveURL(/\/settings\/workspace$/);
+    await page.getByRole("navigation", { name: "Settings" }).getByRole("link", { name: "Members" }).click();
     await expect(page).toHaveURL(/\/settings\/members$/);
     await expect(page.getByRole("table", { name: "Workspace members" })).toContainText("Alex Pham");
 

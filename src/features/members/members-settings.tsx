@@ -10,7 +10,6 @@ import { ErrorState } from "@/components/feedback/error-state";
 import { LoadingState } from "@/components/feedback/loading-state";
 import { notifySuccess } from "@/components/feedback/notify";
 import { initials } from "@/components/layout/app-topbar";
-import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -82,19 +81,20 @@ export function MembersSettings() {
     void queryClient.invalidateQueries({ queryKey: meKey });
   };
 
+  // The page title ("Settings") comes from the settings layout; this is the section header.
   const header = (
-    <PageHeader
-      title="Members"
-      description={`People in “${workspace.name}”.`}
-      actions={
-        isOwner && (
-          <Button onClick={() => setInviteOpen(true)} disabled={!members.data}>
-            <UserPlus />
-            Invite member
-          </Button>
-        )
-      }
-    />
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 className="text-panel-title font-semibold text-foreground">Members</h2>
+        <p className="mt-1 text-body-sm text-muted-foreground">People in “{workspace.name}”.</p>
+      </div>
+      {isOwner && (
+        <Button onClick={() => setInviteOpen(true)} disabled={!members.data}>
+          <UserPlus />
+          Invite member
+        </Button>
+      )}
+    </div>
   );
 
   if (members.isPending)

@@ -29,7 +29,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/proposals/new": "New proposal",
   "/profile": "Profile",
   "/settings": "Settings",
-  "/settings/workspace": "Workspace",
+  "/settings/workspace": "General",
   "/settings/members": "Members",
   "/knowledge": "Knowledge",
   "/dev/health": "System health",

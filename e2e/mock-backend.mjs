@@ -43,6 +43,22 @@ const MEMBERS = [
 const PENDING = [];
 let invitationSeq = 0;
 
+/** Proposals & templates (US-FE-05/06/07), shared by all tests: each test uses its own names. */
+const TEMPLATES = [
+  {
+    id: "aaaaaaaa-1111-4222-8333-444444444444",
+    name: "Standard IT proposal",
+    description: null,
+    sections: [
+      { key: "executive-summary", title: "Executive Summary", position: 0, requiresUserInput: false },
+      { key: "commercial-overview", title: "Commercial Overview", position: 1, requiresUserInput: true },
+    ],
+  },
+];
+const PROPOSALS = [];
+let proposalSeq = 0;
+const now = () => new Date().toISOString();
+
 let generation = 0;
 const tokens = () => {
   generation += 1;
@@ -121,6 +137,86 @@ createServer(async (req, res) => {
     if (!INVITATIONS[token]) return problem(res, 404, "Not Found");
     if (INVITATIONS[token].email !== E2E_USER.email) return problem(res, 403, "Forbidden");
     return json(res, 200, { ...E2E_WORKSPACES[1], createdAt: "2026-09-01T00:00:00Z" });
+  }
+  const workspace = pathname.match(/^\/api\/workspaces\/([0-9a-f-]{36})$/);
+  if (workspace) {
+    if (!authed) return problem(res, 401, "Unauthorized");
+    const ws = E2E_WORKSPACES.find((w) => w.id === workspace[1]);
+    if (!ws) return problem(res, 404, "Not Found");
+    if (req.method === "GET") return json(res, 200, { ...ws, createdAt: "2026-09-01T08:00:00Z" });
+  }
+  if (
+    pathname === "/api/templates" ||
+    pathname.startsWith("/api/templates/") ||
+    pathname.startsWith("/api/proposals")
+  ) {
+    if (!authed) return problem(res, 401, "Unauthorized");
+    if (!E2E_WORKSPACES.some((w) => w.id === req.headers["x-workspace-id"])) return problem(res, 400, "Bad Request");
+    const [, , kind, id, action] = pathname.split("/");
+    if (kind === "templates" && req.method === "GET" && !id)
+      return json(
+        res,
+        200,
+        TEMPLATES.map((t) => ({ id: t.id, name: t.name, description: null, sectionCount: t.sections.length })),
+      );
+    if (kind === "templates" && req.method === "GET") {
+      const t = TEMPLATES.find((x) => x.id === id);
+      return t ? json(res, 200, t) : problem(res, 404, "Not Found");
+    }
+    if (kind === "proposals" && req.method === "GET" && !id) {
+      const url = new URL(req.url, "http://localhost");
+      const q = (url.searchParams.get("q") ?? "").toLowerCase();
+      const status = url.searchParams.get("status");
+      const page = Number(url.searchParams.get("page") ?? 0);
+      const size = Number(url.searchParams.get("size") ?? 20);
+      const items = PROPOSALS.filter(
+        (p) => (!q || `${p.name} ${p.customerName}`.toLowerCase().includes(q)) && (!status || p.status === status),
+      ).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      return json(res, 200, {
+        items: items.slice(page * size, (page + 1) * size),
+        page,
+        size,
+        totalElements: items.length,
+        totalPages: Math.max(1, Math.ceil(items.length / size)),
+      });
+    }
+    if (kind === "proposals" && req.method === "POST" && !id) {
+      const body = await readJson(req);
+      proposalSeq += 1;
+      const p = {
+        customerWebsite: null,
+        accountManager: null,
+        solutionArchitect: null,
+        salesOwner: null,
+        opportunityValue: null,
+        internalNotes: null,
+        ...body,
+        id: `dddddddd-0000-4000-8000-${String(proposalSeq).padStart(12, "0")}`,
+        status: "DRAFT",
+        previousStatus: null,
+        createdBy: "11111111-2222-4333-8444-555555555555",
+        createdAt: now(),
+        updatedAt: now(),
+        version: 0,
+      };
+      PROPOSALS.push(p);
+      return json(res, 201, p);
+    }
+    const p = PROPOSALS.find((x) => x.id === id);
+    if (kind === "proposals" && !p) return problem(res, 404, "Not Found");
+    if (kind === "proposals" && req.method === "GET" && !action) return json(res, 200, p);
+    if (kind === "proposals" && req.method === "PATCH" && !action) {
+      const body = await readJson(req);
+      if (body.version !== p.version) return problem(res, 409, "Conflict");
+      Object.assign(p, body, { version: p.version + 1, updatedAt: now() });
+      return json(res, 200, p);
+    }
+    if (kind === "proposals" && req.method === "DELETE" && !action) {
+      if (p.status !== "DRAFT") return problem(res, 409, "Conflict");
+      PROPOSALS.splice(PROPOSALS.indexOf(p), 1);
+      res.writeHead(204).end();
+      return;
+    }
   }
   const members = pathname.match(/^\/api\/workspaces\/([0-9a-f-]{36})\/(members|invitations)(?:\/([0-9a-f-]{36}))?$/);
   if (members) {

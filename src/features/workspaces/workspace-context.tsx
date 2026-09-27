@@ -19,6 +19,8 @@ interface WorkspaceContextValue {
   workspace: WorkspaceItem | undefined;
   workspaces: readonly WorkspaceItem[];
   switchWorkspace: (id: string) => void;
+  /** Call before leaving a workspace on purpose (US-FE-45): the fallback then happens without the "lost access" warning. */
+  markLeaving: (id: string) => void;
   query: ReturnType<typeof useCurrentUser>;
 }
 
@@ -52,6 +54,10 @@ export function WorkspaceProvider({
   /** The workspace this tab last settled on, and a switch the user asked for (not a fallback). */
   const settled = useRef<{ id: string; name: string } | undefined>(undefined);
   const requestedSwitch = useRef<string | undefined>(undefined);
+  const leaving = useRef<string | undefined>(undefined);
+  const markLeaving = useCallback((id: string) => {
+    leaving.current = id;
+  }, []);
 
   const dropWorkspaceData = useCallback(() => {
     void queryClient.cancelQueries({ queryKey: [WORKSPACE_SCOPE] });
@@ -88,6 +94,11 @@ export function WorkspaceProvider({
     if (!lost) return;
 
     dropWorkspaceData();
+    if (previous && leaving.current === previous.id) {
+      leaving.current = undefined; // the user left: the page confirms it, no warning
+      router.push("/");
+      return;
+    }
     notifyWarning(
       previous ? `You no longer have access to “${previous.name}”` : "Your last workspace is no longer available",
       `Switched to “${workspaceName}”.`,
@@ -118,8 +129,8 @@ export function WorkspaceProvider({
   }, [queryClient, workspace]);
 
   const value = useMemo(
-    () => ({ user: query.data, workspace, workspaces, switchWorkspace, query }),
-    [query, workspace, workspaces, switchWorkspace],
+    () => ({ user: query.data, workspace, workspaces, switchWorkspace, markLeaving, query }),
+    [query, workspace, workspaces, switchWorkspace, markLeaving],
   );
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }

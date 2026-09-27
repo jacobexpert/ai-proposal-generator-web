@@ -6,4 +6,5 @@ export { useCurrentUser } from "./use-current-user";
 export { parseWorkspaceId, rememberWorkspace, WORKSPACE_COOKIE } from "./workspace-cookie";
 export { useCurrentWorkspace, useWorkspaceContext, WorkspaceProvider } from "./workspace-context";
 export { WorkspaceGate } from "./workspace-gate";
+export { WorkspaceGeneral } from "./workspace-general";
 export { WorkspaceSwitcher } from "./workspace-switcher";

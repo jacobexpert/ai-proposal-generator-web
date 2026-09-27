@@ -15,6 +15,7 @@ describe("describeUploadError", () => {
     [403, /not found, or you don't have access/i, false],
     [404, /not found, or you don't have access/i, false],
     [503, /temporarily unavailable/i, true],
+    [504, /took too long.*check the documents list/i, true],
     [500, /went wrong/i, true],
     [429, /too many uploads/i, true],
   ])("maps %d", (status, message, retryable) => {

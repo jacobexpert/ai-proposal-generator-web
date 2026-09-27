@@ -5,14 +5,16 @@ import { serverEnv } from "@/config/env";
  * `proxy.ts`; never from the browser. Redirects are not followed (no open redirect /
  * SSRF through a 3xx), and every call has a timeout.
  */
-export async function backendFetch(path: string, init: RequestInit & { duplex?: "half" } = {}): Promise<Response> {
+export async function backendFetch(
+  path: string,
+  { timeoutMs, ...init }: RequestInit & { duplex?: "half"; /** Overrides `API_TIMEOUT_MS`. */ timeoutMs?: number } = {},
+): Promise<Response> {
   if (!path.startsWith("/") || path.startsWith("//")) {
     throw new Error(`backendFetch expects an absolute API path, got "${path}"`);
   }
   const { API_BASE_URL, API_TIMEOUT_MS } = serverEnv();
-  const signal = init.signal
-    ? AbortSignal.any([init.signal, AbortSignal.timeout(API_TIMEOUT_MS)])
-    : AbortSignal.timeout(API_TIMEOUT_MS);
+  const timeout = AbortSignal.timeout(timeoutMs ?? API_TIMEOUT_MS);
+  const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
   return fetch(`${API_BASE_URL}${path}`, { ...init, redirect: "manual", cache: "no-store", signal });
 }
 

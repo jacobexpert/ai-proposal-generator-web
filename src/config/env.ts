@@ -12,6 +12,11 @@ export const serverEnvSchema = z.object({
     .transform((url) => url.replace(/\/+$/, "")),
   /** Request timeout (ms) for BFF → backend calls. */
   API_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120_000).default(30_000),
+  /**
+   * Timeout (ms) for streamed uploads (US-FE-08): sending up to 25 MB, then malware scan and type
+   * detection on the API, takes longer than an ordinary call.
+   */
+  API_UPLOAD_TIMEOUT_MS: z.coerce.number().int().min(1000).max(1_800_000).default(300_000),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -32,6 +37,7 @@ export function serverEnv(): ServerEnv {
   cached ??= parseServerEnv({
     API_BASE_URL: process.env.API_BASE_URL,
     API_TIMEOUT_MS: process.env.API_TIMEOUT_MS,
+    API_UPLOAD_TIMEOUT_MS: process.env.API_UPLOAD_TIMEOUT_MS,
   });
   return cached;
 }

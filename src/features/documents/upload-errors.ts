@@ -55,6 +55,13 @@ export function describeUploadError(error: unknown): UploadFailure {
         retryable: true,
         traceId,
       };
+    case 504:
+      // The BFF gave up waiting: the API may still have stored the file.
+      return {
+        message: "The server took too long to respond. Check the documents list before retrying.",
+        retryable: true,
+        traceId,
+      };
     default:
       return status >= 500
         ? { message: "Something went wrong on our side. Retry.", retryable: true, traceId }

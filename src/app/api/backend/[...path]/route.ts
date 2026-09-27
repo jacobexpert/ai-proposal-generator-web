@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { serverEnv } from "@/config/env";
 import { backendFetch, discard, forwardedFor, problem } from "@/server/backend";
 import { isSameOriginRequest } from "@/server/csrf";
 import {
@@ -126,7 +127,8 @@ async function handle(request: NextRequest, context: RouteContext): Promise<Resp
       method: request.method,
       headers: buildHeaders(request, token, clientIp),
       body,
-      ...(stream ? { duplex: "half" as const } : {}),
+      // Uploads are streamed and get the longer upload timeout (US-FE-08).
+      ...(stream ? { duplex: "half" as const, timeoutMs: serverEnv().API_UPLOAD_TIMEOUT_MS } : {}),
       signal: request.signal,
     });
 
@@ -147,6 +149,10 @@ async function handle(request: NextRequest, context: RouteContext): Promise<Resp
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError" && request.signal.aborted) {
       return new Response(null, { status: 499 });
+    }
+    // Not "unreachable": the API may still have done the work (e.g. stored an upload).
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      return problem(504, "Gateway Timeout", "The server took too long to respond.");
     }
     return problem(503, "Service Unavailable", "The server could not be reached.");
   }

@@ -55,7 +55,31 @@ const TEMPLATES = [
     ],
   },
 ];
-const PROPOSALS = [];
+/** The proposal used by the document upload tests (US-FE-08). */
+const DOCUMENTS_PROPOSAL = {
+  id: "3f6c2a1b-8d4e-4f5a-9b6c-7d8e9f0a1b2c",
+  name: "E2E upload proposal",
+  customerName: "Upload Corp",
+  customerIndustry: "Retail",
+  customerWebsite: null,
+  opportunityDescription: "Proposal used by the document upload tests.",
+  opportunityValue: null,
+  deadline: "2099-12-31",
+  language: "en",
+  currency: "USD",
+  accountManager: null,
+  solutionArchitect: null,
+  salesOwner: null,
+  internalNotes: null,
+  templateId: "aaaaaaaa-1111-4222-8333-444444444444",
+  status: "DRAFT",
+  previousStatus: null,
+  createdBy: "11111111-2222-4333-8444-555555555555",
+  createdAt: "2026-09-27T08:00:00Z",
+  updatedAt: "2026-09-27T08:00:00Z",
+  version: 0,
+};
+const PROPOSALS = [DOCUMENTS_PROPOSAL];
 let proposalSeq = 0;
 const now = () => new Date().toISOString();
 
@@ -148,7 +172,7 @@ createServer(async (req, res) => {
     if (INVITATIONS[token].email !== E2E_USER.email) return problem(res, 403, "Forbidden");
     return json(res, 200, { ...E2E_WORKSPACES[1], createdAt: "2026-09-01T00:00:00Z" });
   }
-  
+
   const documentsMatch = DOCUMENTS_PATH.exec(pathname);
   if (req.method === "POST" && documentsMatch) {
     if (!authed) return problem(res, 401, "Unauthorized");
@@ -158,9 +182,19 @@ createServer(async (req, res) => {
     documentSeq += 1;
     const id = `00000000-0000-4000-8000-${String(documentSeq).padStart(12, "0")}`;
     if (/^eicar/i.test(fileName)) {
-      return json(res, 422, { type: "about:blank", title: "Unprocessable Entity", status: 422, documentId: id }, {
-        "Content-Type": "application/problem+json",
-      });
+      return json(
+        res,
+        422,
+        { type: "about:blank", title: "Unprocessable Entity", status: 422, documentId: id },
+        {
+          "Content-Type": "application/problem+json",
+        },
+      );
+    }
+    // Like the API (US-BE-07): the first document moves the proposal DRAFT → DOCUMENTS_UPLOADED.
+    const proposal = PROPOSALS.find((p) => p.id === documentsMatch[1]);
+    if (proposal?.status === "DRAFT") {
+      Object.assign(proposal, { status: "DOCUMENTS_UPLOADED", version: proposal.version + 1, updatedAt: now() });
     }
     return json(res, 201, {
       id,
@@ -175,6 +209,7 @@ createServer(async (req, res) => {
       createdAt: "2026-09-27T08:00:00Z",
       updatedAt: "2026-09-27T08:00:00Z",
     });
+  }
   const workspace = pathname.match(/^\/api\/workspaces\/([0-9a-f-]{36})$/);
   if (workspace) {
     if (!authed) return problem(res, 401, "Unauthorized");

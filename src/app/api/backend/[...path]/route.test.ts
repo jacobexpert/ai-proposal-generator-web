@@ -1,11 +1,12 @@
 // @vitest-environment node
 import { http, HttpResponse } from "msw";
-import { beforeEach, describe, expect, it } from "vitest";
+import { NextRequest } from "next/server";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BACKEND_URL } from "@/mocks/handlers";
 import { server } from "@/mocks/server";
 import { resetRefreshCache } from "@/server/session";
-import { RENEWED_TOKENS, bffRequest, setCookies } from "@/test/bff";
+import { APP_ORIGIN, RENEWED_TOKENS, bffRequest, setCookies } from "@/test/bff";
 
 import { DELETE, GET, POST } from "./route";
 
@@ -257,6 +258,39 @@ describe("BFF proxy /api/backend/*", () => {
     );
     expect(redirect.status).toBe(502);
     expect(redirect.headers.get("location")).toBeNull();
+  });
+
+  describe("timeouts (US-FE-08)", () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it("gives streamed uploads the upload timeout and ordinary calls the default one", async () => {
+      const timeout = vi.spyOn(AbortSignal, "timeout");
+      server.use(
+        http.post(`${BACKEND_URL}/api/proposals/:id/documents`, () => HttpResponse.json({ id: "d1" }, { status: 201 })),
+        http.get(`${BACKEND_URL}/api/me`, () => HttpResponse.json({})),
+      );
+      const form = new FormData();
+      form.append("file", new File(["%PDF-1.7"], "rfp.pdf", { type: "application/pdf" }));
+      const upload = new NextRequest(`${APP_ORIGIN}/api/backend/api/proposals/p1/documents?category=RFP`, {
+        method: "POST",
+        body: form,
+        headers: { origin: APP_ORIGIN, cookie: "apg_at=a", "x-workspace-id": WS },
+      });
+      expect(upload.headers.get("content-type")).toMatch(/^multipart\/form-data/);
+      const res = await POST(upload, ctx(["api", "proposals", "p1", "documents"]));
+      expect(res.status).toBe(201);
+      expect(timeout).toHaveBeenLastCalledWith(300_000);
+
+      await GET(bffRequest("/api/backend/api/me", { cookies: { apg_at: "a" } }), ctx(["api", "me"]));
+      expect(timeout).toHaveBeenLastCalledWith(30_000);
+    });
+
+    it("answers 504 (not 503) when the API does not answer in time", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new DOMException("timed out", "TimeoutError"));
+      const res = await GET(bffRequest("/api/backend/api/me", { cookies: { apg_at: "a" } }), ctx(["api", "me"]));
+      expect(res.status).toBe(504);
+      expect(await res.json()).toMatchObject({ title: "Gateway Timeout" });
+    });
   });
 
   it("answers 503 when the API is unreachable", async () => {

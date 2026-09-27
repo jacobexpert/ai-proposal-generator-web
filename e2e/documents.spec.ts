@@ -14,7 +14,8 @@ const file = (name: string, mimeType = "application/pdf") => ({
 test.describe("Document upload (US-FE-08)", () => {
   test("uploads several files with their categories", async ({ page }) => {
     await signIn(page, DOCUMENTS_PAGE);
-    await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "E2E upload proposal" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Documents" })).toBeVisible();
 
     await page.getByTestId("document-file-input").setInputFiles([file("rfp.pdf"), file("minutes.md", "text/markdown")]);
     await page.getByRole("combobox", { name: "Category for minutes.md" }).click();
@@ -25,6 +26,8 @@ test.describe("Document upload (US-FE-08)", () => {
     await expect(rows.filter({ hasText: "rfp.pdf" })).toContainText("Uploaded");
     await expect(rows.filter({ hasText: "minutes.md" })).toContainText("Uploaded");
     await expect(page.getByRole("combobox", { name: "Category for minutes.md" })).toContainText("Meeting note");
+    // The proposal header follows the new status without a reload.
+    await expect(page.locator("[data-slot=status-badge]", { hasText: "Documents uploaded" })).toBeVisible();
   });
 
   test("rejects unsupported files before upload and reports malware from the API", async ({ page }) => {

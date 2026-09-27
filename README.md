@@ -42,10 +42,11 @@ For E2E, run `npx playwright install chromium` once. To reuse an existing Chromi
 
 Validated with Zod at startup and build (`src/config/env.ts`); an invalid value stops the app with a clear message. Both variables are **server-only**; nothing is exposed to the browser.
 
-| Variable         | Required | Description                                                 |
-| ---------------- | -------- | ----------------------------------------------------------- |
-| `API_BASE_URL`   | yes      | Base URL of the Spring Boot API, http(s), no trailing slash |
-| `API_TIMEOUT_MS` | no       | Timeout for BFF → API calls in ms (default 30000)           |
+| Variable                | Required | Description                                                         |
+| ----------------------- | -------- | ------------------------------------------------------------------- |
+| `API_BASE_URL`          | yes      | Base URL of the Spring Boot API, http(s), no trailing slash         |
+| `API_TIMEOUT_MS`        | no       | Timeout for BFF → API calls in ms (default 30000)                   |
+| `API_UPLOAD_TIMEOUT_MS` | no       | Timeout for uploads streamed through the BFF in ms (default 300000) |
 
 ## Authentication (BFF, FDEC-03)
 

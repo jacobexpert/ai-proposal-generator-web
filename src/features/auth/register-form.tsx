@@ -22,6 +22,18 @@ import { PASSWORD_MIN, registerFormSchema, type RegisterFormInput } from "./sche
 
 type FormError = { message: string; traceId?: string; signInLink?: boolean };
 
+/** Sign-up from an invitation link (US-FE-43 AC3): email fixed, joins the inviting workspace. */
+export interface RegisterInvitation {
+  token: string;
+  email: string;
+  workspaceName: string;
+  /** The account already exists: switch to signing in instead of linking away. */
+  onSignInInstead: () => void;
+  /** The API says the invitation is no longer valid (404). */
+  onInvalid: () => void;
+  onJoined?: () => void;
+}
+
 /** US-FE-42 AC4: map API failures to what the user can do next. */
 export function describeRegisterError(error: unknown): FormError {
   if (error instanceof ApiError && error.status === 409)
@@ -35,7 +47,7 @@ export function describeRegisterError(error: unknown): FormError {
 
 const FIELDS = ["email", "displayName", "password", "workspaceName"] as const;
 
-export function RegisterForm() {
+export function RegisterForm({ invitation }: { invitation?: RegisterInvitation } = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<FormError | null>(null);
@@ -47,17 +59,30 @@ export function RegisterForm() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormInput>({
     resolver: zodResolver(registerFormSchema),
-    defaultValues: { email: "", displayName: "", password: "", confirmPassword: "", workspaceName: "" },
+    defaultValues: {
+      email: invitation?.email ?? "",
+      displayName: "",
+      password: "",
+      confirmPassword: "",
+      workspaceName: "",
+    },
   });
   const [displayName, password] = useWatch({ control, name: ["displayName", "password"] });
   const workspacePlaceholder = `${displayName.trim() || "Your name"}'s workspace`;
 
   const onSubmit = handleSubmit(async ({ email, displayName, password, workspaceName }) => {
-    const values = { email, displayName, password, workspaceName };
+    const values = invitation
+      ? { email, displayName, password, invitationToken: invitation.token }
+      : { email, displayName, password, workspaceName };
     setFormError(null);
     try {
       await registerAccount(values);
     } catch (error) {
+      if (invitation && error instanceof ApiError && error.status === 404) return invitation.onInvalid();
+      if (invitation && error instanceof ApiError && error.status === 403) {
+        setFormError({ message: "This invitation was sent to a different email address." });
+        return;
+      }
       const unmatched = applyFieldErrors(error, FIELDS, setError);
       const described = describeRegisterError(error);
       setFormError(unmatched.length ? { ...described, message: unmatched.join(" ") } : described);
@@ -65,7 +90,11 @@ export function RegisterForm() {
     }
     // The BFF set the session and remembered the new workspace (AC3).
     queryClient.clear();
-    notifySuccess(`Welcome, ${values.displayName.trim()}!`, "Your workspace is ready.");
+    invitation?.onJoined?.();
+    notifySuccess(
+      `Welcome, ${values.displayName.trim()}!`,
+      invitation ? `You've joined “${invitation.workspaceName}”.` : "Your workspace is ready.",
+    );
     router.replace("/");
     router.refresh();
   });
@@ -78,11 +107,20 @@ export function RegisterForm() {
           <div>
             <p>
               {formError.message}{" "}
-              {formError.signInLink && (
-                <Link href="/login" className="font-medium underline underline-offset-2">
-                  Sign in instead
-                </Link>
-              )}
+              {formError.signInLink &&
+                (invitation ? (
+                  <button
+                    type="button"
+                    onClick={invitation.onSignInInstead}
+                    className="font-medium underline underline-offset-2"
+                  >
+                    Sign in instead
+                  </button>
+                ) : (
+                  <Link href="/login" className="font-medium underline underline-offset-2">
+                    Sign in instead
+                  </Link>
+                ))}
             </p>
             {formError.traceId && (
               <p className="mt-1 font-mono text-mono-sm opacity-80">Trace ID: {formError.traceId}</p>
@@ -91,13 +129,20 @@ export function RegisterForm() {
         </Alert>
       )}
 
-      <Field id="email" label="Work email" error={errors.email}>
+      <Field
+        id="email"
+        label="Work email"
+        error={errors.email}
+        hintText={invitation ? "The address your invitation was sent to." : undefined}
+      >
         {(aria) => (
           <Input
             id="email"
             type="email"
             autoComplete="email"
             placeholder="name@company.com"
+            readOnly={!!invitation}
+            className={invitation ? "bg-muted text-muted-foreground" : undefined}
             {...aria}
             {...register("email")}
           />
@@ -134,23 +179,25 @@ export function RegisterForm() {
         )}
       </Field>
 
-      <Field
-        id="workspaceName"
-        label="Workspace name"
-        optional
-        error={errors.workspaceName}
-        hintText="Your team's space for proposals. You can rename it later."
-      >
-        {(aria) => (
-          <Input
-            id="workspaceName"
-            maxLength={200}
-            placeholder={workspacePlaceholder}
-            {...aria}
-            {...register("workspaceName")}
-          />
-        )}
-      </Field>
+      {!invitation && (
+        <Field
+          id="workspaceName"
+          label="Workspace name"
+          optional
+          error={errors.workspaceName}
+          hintText="Your team's space for proposals. You can rename it later."
+        >
+          {(aria) => (
+            <Input
+              id="workspaceName"
+              maxLength={200}
+              placeholder={workspacePlaceholder}
+              {...aria}
+              {...register("workspaceName")}
+            />
+          )}
+        </Field>
+      )}
 
       <Button type="submit" size="lg" className="mt-1 w-full" disabled={isSubmitting}>
         {isSubmitting && <LoaderCircle className="animate-spin" aria-hidden="true" />}

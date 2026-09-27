@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { backendFetch, forwardedFor, problem } from "@/server/backend";
+import { backendFetch, discard, forwardedFor, problem } from "@/server/backend";
 import { isSameOriginRequest } from "@/server/csrf";
 import { WORKSPACE_COOKIE } from "@/features/workspaces/workspace-cookie";
 import { ACCESS_COOKIE, REFRESH_COOKIE, clearSessionCookies, refreshSession } from "@/server/session";
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   if (accessToken) {
     try {
-      await backendFetch("/api/auth/logout", {
+      const response = await backendFetch("/api/auth/logout", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify(refreshToken ? { refreshToken } : {}),
       });
+      discard(response); // 204, or a Problem Details body we do not need
     } catch {
       // Best effort: the cookies are cleared regardless, tokens expire on their own.
     }

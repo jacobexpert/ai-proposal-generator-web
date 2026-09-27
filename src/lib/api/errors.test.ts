@@ -77,3 +77,19 @@ describe("applyFieldErrors", () => {
     expect(setError).not.toHaveBeenCalled();
   });
 });
+
+describe("Spring Security Problem Details (401/403 with traceId)", () => {
+  it("keeps the trace id but never shows the server's security wording", () => {
+    const expired = describeApiError(
+      new ApiError(401, { status: 401, title: "Unauthorized", detail: "Jwt expired at 2026-09-27", traceId: "t-401" }),
+    );
+    expect(expired).toMatchObject({ kind: "unauthorized", traceId: "t-401" });
+    expect(expired.message).not.toContain("Jwt");
+
+    const denied = describeApiError(
+      new ApiError(403, { status: 403, title: "Forbidden", detail: "Access Denied", traceId: "t-403" }),
+    );
+    expect(denied).toMatchObject({ kind: "not-found", title: "Not found or you don't have access", traceId: "t-403" });
+    expect(denied.message).not.toContain("Access Denied");
+  });
+});

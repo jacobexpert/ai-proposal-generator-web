@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { backendFetch } from "./backend";
+import { backendFetch, discard } from "./backend";
 
 /** Cookie names (FDEC-03). Values are opaque tokens; never log them. */
 export const ACCESS_COOKIE = "apg_at";
@@ -88,7 +88,10 @@ export function refreshSession(refreshToken: string, clientIp?: string): Promise
         },
         body: JSON.stringify({ refreshToken }),
       });
-      if (!response.ok) return { ok: false, status: response.status };
+      if (!response.ok) {
+        discard(response);
+        return { ok: false, status: response.status };
+      }
       const parsed = tokenResponseSchema.safeParse(await response.json().catch(() => null));
       return parsed.success ? { ok: true, tokens: parsed.data } : { ok: false, status: 502 };
     } catch {

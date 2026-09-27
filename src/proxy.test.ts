@@ -31,6 +31,11 @@ describe("proxy (route protection)", () => {
     expect(res.headers.get("location")).toBe("http://localhost:3000/");
   });
 
+  it("keeps the invitation page open to signed-in and signed-out users (US-FE-43)", async () => {
+    expect((await proxy(page("/invitations/accept?token=abc"))).headers.get("location")).toBeNull();
+    expect((await proxy(page("/invitations/accept", { apg_at: "access-1" }))).headers.get("location")).toBeNull();
+  });
+
   it("lets signed-in users through", async () => {
     const res = await proxy(page("/proposals", { apg_at: "access-1" }));
     expect(res.headers.get("location")).toBeNull();

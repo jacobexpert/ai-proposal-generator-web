@@ -162,6 +162,68 @@ describe("BFF proxy /api/backend/*", () => {
     expect(cookies.apg_rt.attrs).toContain("max-age=0");
   });
 
+  // The API now answers Spring Security's 401/403 with Problem Details (+ traceId) and keeps
+  // WWW-Authenticate: the body reaches the browser, the header does not.
+  const springProblem = (status: 401 | 403) =>
+    HttpResponse.json(
+      { type: "about:blank", title: status === 401 ? "Unauthorized" : "Forbidden", status, traceId: `trace-${status}` },
+      {
+        status,
+        headers: {
+          "Content-Type": "application/problem+json",
+          "WWW-Authenticate": 'Bearer error="invalid_token", error_description="Jwt expired at 2026-09-27T10:00:00Z"',
+        },
+      },
+    );
+
+  it("relays Spring Security's 401 Problem Details without WWW-Authenticate when the session cannot be renewed", async () => {
+    server.use(
+      http.post(`${BACKEND_URL}/api/auth/refresh`, () => springProblem(401)),
+      http.get(`${BACKEND_URL}/api/me`, () => springProblem(401)),
+    );
+    const res = await GET(
+      bffRequest("/api/backend/api/me", { cookies: { apg_at: "expired", apg_rt: "revoked" } }),
+      ctx(["api", "me"]),
+    );
+    expect(res.status).toBe(401);
+    expect(res.headers.get("content-type")).toContain("application/problem+json");
+    expect(res.headers.get("www-authenticate")).toBeNull();
+    expect(await res.json()).toMatchObject({ status: 401, traceId: "trace-401" });
+    expect(setCookies(res).apg_at.attrs).toContain("max-age=0");
+  });
+
+  it("replays after a 401 with a body once the token is renewed", async () => {
+    server.use(
+      http.post(`${BACKEND_URL}/api/auth/refresh`, () => HttpResponse.json(RENEWED_TOKENS)),
+      http.get(`${BACKEND_URL}/api/me`, ({ request }) =>
+        request.headers.get("authorization") === "Bearer access-2"
+          ? HttpResponse.json({ email: "jackie@example.com" })
+          : springProblem(401),
+      ),
+    );
+    const res = await GET(
+      bffRequest("/api/backend/api/me", { cookies: { apg_at: "expired", apg_rt: "refresh-1" } }),
+      ctx(["api", "me"]),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ email: "jackie@example.com" });
+  });
+
+  it("relays Spring Security's 403 Problem Details and keeps the session", async () => {
+    server.use(http.get(`${BACKEND_URL}/api/workspaces/current`, () => springProblem(403)));
+    const res = await GET(
+      bffRequest("/api/backend/api/workspaces/current", {
+        cookies: { apg_at: "access-1" },
+        headers: { "x-workspace-id": WS },
+      }),
+      ctx(["api", "workspaces", "current"]),
+    );
+    expect(res.status).toBe(403);
+    expect(res.headers.get("www-authenticate")).toBeNull();
+    expect(await res.json()).toMatchObject({ status: 403, traceId: "trace-403" });
+    expect(res.headers.getSetCookie()).toHaveLength(0);
+  });
+
   it("passes public endpoints through without a session", async () => {
     let auth: string | null = "unset";
     server.use(

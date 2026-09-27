@@ -26,7 +26,7 @@ function describeLoginError(error: unknown): { message: string; traceId?: string
   return { message: `${ui.title}. ${ui.message}`, traceId: ui.traceId };
 }
 
-export function LoginForm({ returnUrl }: { returnUrl: string }) {
+export function LoginForm({ returnUrl, defaultEmail = "" }: { returnUrl: string; defaultEmail?: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<{ message: string; traceId?: string } | null>(null);
@@ -35,7 +35,7 @@ export function LoginForm({ returnUrl }: { returnUrl: string }) {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } });
+  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema), defaultValues: { email: defaultEmail, password: "" } });
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);

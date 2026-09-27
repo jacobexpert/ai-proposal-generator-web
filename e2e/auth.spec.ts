@@ -31,7 +31,8 @@ test.describe("Authentication (US-FE-02)", () => {
       local: JSON.stringify(localStorage),
       session: JSON.stringify(sessionStorage),
     }));
-    expect(visible.cookie).not.toContain("apg_");
+    // Only the session tokens must be hidden; `apg_ws` (a workspace id, US-FE-03) is readable by design.
+    expect(visible.cookie).not.toMatch(/apg_(at|rt)=/);
     expect(visible.local + visible.session).not.toMatch(/access-|refresh-/);
   });
 

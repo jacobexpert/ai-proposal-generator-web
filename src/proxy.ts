@@ -11,8 +11,10 @@ import {
   type Tokens,
 } from "@/server/session";
 
-/** Pages reachable without a session. */
-const PUBLIC_PATHS = new Set(["/login", "/register"]);
+/** Pages for signed-out users only: a signed-in visitor is sent on to the app. */
+const GUEST_ONLY_PATHS = new Set(["/login", "/register"]);
+/** Pages for everyone, signed in or not (the invitation link works in both states). */
+const OPEN_PATHS = new Set(["/invitations/accept"]);
 
 /**
  * Route protection (US-FE-02 AC1). This is a UX guard only: every API call is still
@@ -21,7 +23,8 @@ const PUBLIC_PATHS = new Set(["/login", "/register"]);
  */
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.has(pathname);
+  const guestOnly = GUEST_ONLY_PATHS.has(pathname);
+  const isPublic = guestOnly || OPEN_PATHS.has(pathname);
 
   let hasSession = request.cookies.has(ACCESS_COOKIE);
   let renewed: Tokens | undefined;
@@ -39,7 +42,7 @@ export async function proxy(request: NextRequest) {
   }
 
   let response: NextResponse;
-  if (hasSession && isPublic) {
+  if (hasSession && guestOnly) {
     // Already signed in: leave the sign-in / sign-up page (US-FE-42 AC5).
     const target = safeReturnUrl(request.nextUrl.searchParams.get("returnUrl"));
     response = NextResponse.redirect(new URL(target, request.url));

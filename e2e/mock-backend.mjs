@@ -17,6 +17,12 @@ const ME = {
   workspaces: E2E_WORKSPACES,
 };
 
+/** Invitation tokens known to the mock: one for the E2E user, one for someone else. */
+const INVITATIONS = {
+  "invite-for-jackie": { email: E2E_USER.email },
+  "invite-for-colleague": { email: "colleague@example.com" },
+};
+
 let generation = 0;
 const tokens = () => {
   generation += 1;
@@ -76,6 +82,25 @@ createServer(async (req, res) => {
   }
   if (req.method === "GET" && pathname === "/actuator/health") {
     return json(res, 200, { status: "UP", components: { db: { status: "UP" } } });
+  }
+  if (req.method === "POST" && pathname === "/api/invitations/lookup") {
+    const { token } = await readJson(req);
+    const invitation = INVITATIONS[token];
+    return invitation
+      ? json(res, 200, {
+          workspaceName: E2E_WORKSPACES[1].name,
+          role: "MEMBER",
+          expiresAt: "2026-10-03T09:30:00Z",
+          ...invitation,
+        })
+      : problem(res, 404, "Not Found");
+  }
+  if (req.method === "POST" && pathname === "/api/invitations/accept") {
+    if (!authed) return problem(res, 401, "Unauthorized");
+    const { token } = await readJson(req);
+    if (!INVITATIONS[token]) return problem(res, 404, "Not Found");
+    if (INVITATIONS[token].email !== E2E_USER.email) return problem(res, 403, "Forbidden");
+    return json(res, 200, { ...E2E_WORKSPACES[1], createdAt: "2026-09-01T00:00:00Z" });
   }
   if (req.method === "GET" && pathname === "/api/me") {
     return authed ? json(res, 200, ME) : problem(res, 401, "Unauthorized");

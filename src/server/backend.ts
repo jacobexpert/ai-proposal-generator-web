@@ -26,6 +26,16 @@ export function forwardedFor(request: Request): string | undefined {
   return last && /^[0-9a-fA-F:.]{2,45}$/.test(last) ? last : undefined;
 }
 
+/**
+ * Release a response the BFF will not use (e.g. a 401 before a token refresh). API errors carry
+ * a Problem Details body — including Spring Security's 401/403 — so an unread body would keep
+ * the connection busy until garbage collection.
+ */
+export function discard(response: Response): void {
+  // Not awaited: cancelling only releases the connection, nothing depends on it finishing.
+  response.body?.cancel().catch(() => {});
+}
+
 /** JSON Problem Details response (RFC 9457) produced by the BFF itself. */
 export function problem(status: number, title: string, detail?: string): Response {
   return Response.json(

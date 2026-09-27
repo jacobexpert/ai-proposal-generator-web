@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { backendFetch, forwardedFor, problem } from "@/server/backend";
+import { backendFetch, discard, forwardedFor, problem } from "@/server/backend";
 import { isSameOriginRequest } from "@/server/csrf";
 import {
   ACCESS_COOKIE,
@@ -26,7 +26,10 @@ const UUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a
 
 /** Request headers copied to the API. Everything else (cookies, Authorization, Host…) is dropped. */
 const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "if-match", "if-none-match", "x-request-id"];
-/** Response headers copied back to the browser. */
+/**
+ * Response headers copied back to the browser. `WWW-Authenticate` stays server-side: the
+ * browser authenticates with cookies, and its `error_description` would only leak internals.
+ */
 const FORWARDED_RESPONSE_HEADERS = [
   "content-type",
   "content-length",
@@ -135,6 +138,7 @@ async function handle(request: NextRequest, context: RouteContext): Promise<Resp
       const result = await refreshSession(refreshToken, clientIp);
       if (result.ok) {
         renewed = result.tokens;
+        discard(upstream);
         upstream = await send(result.tokens.accessToken);
       } else {
         sessionEnded = true;
